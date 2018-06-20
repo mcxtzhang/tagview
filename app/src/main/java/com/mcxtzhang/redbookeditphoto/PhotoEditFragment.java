@@ -1,6 +1,7 @@
 package com.mcxtzhang.redbookeditphoto;
 
 import android.graphics.Matrix;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -12,11 +13,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Created by zhangxutong on 2018/6/20.
  */
 
 public class PhotoEditFragment extends Fragment {
+
+    public static Map<Integer, List<Point>> sIntegerListMap = new HashMap<>();
 
     public static PhotoEditFragment newInstance(int position) {
         PhotoEditFragment photoEditFragment = new PhotoEditFragment();
@@ -26,6 +33,7 @@ public class PhotoEditFragment extends Fragment {
         return photoEditFragment;
     }
 
+    TagContainerView mTagContainerView;
     private int mPosition;
 
     @Override
@@ -95,6 +103,19 @@ public class PhotoEditFragment extends Fragment {
 
             }
         });
+
+
+        mTagContainerView = rootView.findViewById(R.id.tagContainer);
+        List<Point> points = sIntegerListMap.get(mPosition);
+        mTagContainerView.loadTags(points);
+
+
         return rootView;
     }
+
+    public void onSaveClick() {
+        sIntegerListMap.put(mPosition, mTagContainerView.saveTags());
+    }
+
+
 }

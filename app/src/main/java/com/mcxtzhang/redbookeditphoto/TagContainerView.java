@@ -2,6 +2,7 @@ package com.mcxtzhang.redbookeditphoto;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.support.annotation.NonNull;
@@ -19,26 +20,30 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * Created by zhangxutong on 2018/6/14.
  */
 
-public class TransparentTagParentView extends FrameLayout {
-    private static final String TAG = TransparentTagParentView.class.getSimpleName();
+public class TagContainerView extends FrameLayout {
+    private static final String TAG = TagContainerView.class.getSimpleName();
 
     private Context mContext;
     private Button mDelButton;
     private GestureDetectorCompat mTagParentGestureDetector;
+    private List<View> mTagViewList = new LinkedList<>();
 
-    public TransparentTagParentView(@NonNull Context context) {
+    public TagContainerView(@NonNull Context context) {
         this(context, null);
     }
 
-    public TransparentTagParentView(@NonNull Context context, @Nullable AttributeSet attrs) {
+    public TagContainerView(@NonNull Context context, @Nullable AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TransparentTagParentView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public TagContainerView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context);
     }
@@ -62,7 +67,7 @@ public class TransparentTagParentView extends FrameLayout {
             @Override
             public boolean onSingleTapUp(MotionEvent e) {
                 Toast.makeText(getContext(), "点击", Toast.LENGTH_SHORT).show();
-                addTag(new PointF(e.getX(), e.getY()));
+                addTag(new Point((int) e.getX(), (int) e.getY()));
                 return true;
             }
 
@@ -99,71 +104,18 @@ public class TransparentTagParentView extends FrameLayout {
         return mTagParentGestureDetector.onTouchEvent(event);
     }
 
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        /*float x = ev.getX();
-        float y = ev.getY();
-
-        switch (ev.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                mLastPoint.set(x, y);
-                mDownPoint.set(x, y);
-                break;
-            case MotionEvent.ACTION_MOVE:
-                mLastPoint.set(x, y);
-                break;
-            case MotionEvent.ACTION_UP:
-                if (Math.abs(x - mDownPoint.x) + Math.abs(y - mDownPoint.y) < 10) {
-                    Toast.makeText(getContext(), "点击", Toast.LENGTH_SHORT).show();
-                    addTag(mDownPoint);
-                }
-                mLastPoint.set(0, 0);
-                mDownPoint.set(0, 0);
-                break;
-        }*/
-
-        return super.dispatchTouchEvent(ev);
-    }
-
-
-//    @Override
-//    public boolean onInterceptTouchEvent(MotionEvent ev) {
-//        float x = ev.getX();
-//        float y = ev.getY();
-//
-//        switch (ev.getAction()) {
-//            case MotionEvent.ACTION_DOWN:
-//                mLastPoint.set(x, y);
-//                mDownPoint.set(x, y);
-//                break;
-//            case MotionEvent.ACTION_MOVE:
-//                mLastPoint.set(x, y);
-//                break;
-//            case MotionEvent.ACTION_UP:
-//                if (Math.abs(x - mDownPoint.x) + Math.abs(y - mDownPoint.y) < 10) {
-//                    Toast.makeText(getContext(), "点击", Toast.LENGTH_SHORT).show();
-//                    addTag(mDownPoint);
-//                }
-//                mLastPoint.set(0, 0);
-//                mDownPoint.set(0, 0);
-//                break;
-//        }
-//
-//        return super.onInterceptTouchEvent(ev);
-//    }
-
-    private void addTag(PointF pointF) {
+    private void addTag(Point point) {
         FrameLayout.LayoutParams lp = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.leftMargin = (int) pointF.x;
-        lp.topMargin = (int) pointF.y;
-        TextView tv = new TextView(mContext);
-        tv.setText("Gucci");
-        tv.setBackgroundColor(Color.BLUE);
-        tv.setClickable(true);
+        lp.leftMargin = point.x;
+        lp.topMargin = point.y;
+        TextView tagView = new TextView(mContext);
+        tagView.setText("Gucci");
+        tagView.setBackgroundColor(Color.BLUE);
+        tagView.setClickable(true);
 
-        final GestureDetectorCompat gestureDetectorCompat = new GestureDetectorCompat(mContext, new TagGestureListener(tv));
+        final GestureDetectorCompat gestureDetectorCompat = new GestureDetectorCompat(mContext, new TagGestureListener(tagView));
         gestureDetectorCompat.setIsLongpressEnabled(false);
-        tv.setOnTouchListener(new OnTouchListener() {
+        tagView.setOnTouchListener(new OnTouchListener() {
             private PointF downPoint = new PointF();
             private PointF lastPoint = new PointF();
 
@@ -174,7 +126,24 @@ public class TransparentTagParentView extends FrameLayout {
             }
         });
 
-        addView(tv, lp);
+        addView(tagView, lp);
+        mTagViewList.add(tagView);
+    }
+
+    public List<Point> saveTags() {
+        List<Point> result = new LinkedList<>();
+        for (View view : mTagViewList) {
+            FrameLayout.LayoutParams lp = (LayoutParams) view.getLayoutParams();
+            result.add(new Point(lp.leftMargin, lp.topMargin));
+        }
+        return result;
+    }
+
+    public void loadTags(List<Point> tagPositions) {
+        if (null == tagPositions) return;
+        for (Point tagPosition : tagPositions) {
+            addTag(tagPosition);
+        }
     }
 
     private class TagGestureListener implements GestureDetector.OnGestureListener {
@@ -222,6 +191,7 @@ public class TransparentTagParentView extends FrameLayout {
             Log.d(TAG, "onScroll() called with: rect = [" + rect + "]");
             if (rect.contains((int) rawX, (int) rawY)) {
                 removeView(mView);
+                mTagViewList.remove(mView);
                 return false;
             }
             return true;
