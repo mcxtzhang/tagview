@@ -28,6 +28,7 @@ public class TransparentTagParentView extends FrameLayout {
 
     private Context mContext;
     private Button mDelButton;
+    private GestureDetectorCompat mTagParentGestureDetector;
 
     public TransparentTagParentView(@NonNull Context context) {
         this(context, null);
@@ -91,11 +92,6 @@ public class TransparentTagParentView extends FrameLayout {
         lp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
         addView(mDelButton, lp);
     }
-
-
-    private PointF mDownPoint = new PointF();
-    private PointF mLastPoint = new PointF();
-    private GestureDetectorCompat mTagParentGestureDetector;
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -210,6 +206,7 @@ public class TransparentTagParentView extends FrameLayout {
 
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            requestDisallowInterceptTouchEvent(true);
             float rawX = e2.getRawX();
             float rawY = e2.getRawY();
             float x = rawX - mLastPointF.x;
