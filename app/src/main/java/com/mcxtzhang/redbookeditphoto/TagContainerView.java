@@ -5,7 +5,6 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.GestureDetectorCompat;
@@ -36,7 +35,7 @@ public class TagContainerView extends FrameLayout {
     private Context mContext;
     private Button mDelButton;
     private GestureDetectorCompat mTagParentGestureDetector;
-    private List<View> mTagViewList = new LinkedList<>();
+    private List<TagView> mTagViewList = new LinkedList<>();
     private ImageView mTargetImageView;
 
     public TagContainerView(@NonNull Context context) {
@@ -76,7 +75,7 @@ public class TagContainerView extends FrameLayout {
             @Override
             public boolean onSingleTapUp(MotionEvent e) {
                 Toast.makeText(getContext(), "点击", Toast.LENGTH_SHORT).show();
-                addTag(new Point((int) e.getX(), (int) e.getY()));
+                addTag(new Point((int) e.getX(), (int) e.getY()), true);
                 return true;
             }
 
@@ -113,19 +112,16 @@ public class TagContainerView extends FrameLayout {
         return mTagParentGestureDetector.onTouchEvent(event);
     }
 
-    private void addTag(Point point) {
+    private void addTag(Point point, boolean isRight) {
         TagView tagView = new TagView(mContext);
-        tagView.setOrientationAndPosition(false, point);
         tagView.setText("Gucci");
         tagView.setBackgroundColor(Color.BLUE);
         tagView.setClickable(true);
+        tagView.setOrientationAndPosition(isRight, point);
 
         final GestureDetectorCompat gestureDetectorCompat = new GestureDetectorCompat(mContext, new TagGestureListener(tagView));
         gestureDetectorCompat.setIsLongpressEnabled(false);
         tagView.setOnTouchListener(new OnTouchListener() {
-            private PointF downPoint = new PointF();
-            private PointF lastPoint = new PointF();
-
             @Override
             public boolean onTouch(View v, MotionEvent ev) {
                 Log.i(TAG, "onTouch() called with: v = [" + v + "], ev = [" + ev + "]");
@@ -146,15 +142,16 @@ public class TagContainerView extends FrameLayout {
         mTargetImageView.getImageMatrix().getValues(matrixValues);
 
         List<UploadPhotoTagData> result = new LinkedList<>();
-        for (View view : mTagViewList) {
-            FrameLayout.LayoutParams lp = (LayoutParams) view.getLayoutParams();
+        for (TagView view : mTagViewList) {
+            Point location = view.getLocation();
 
-            float originX = TagMatrixUtil.getOriginX(matrixValues, lp.leftMargin);
-            float originY = TagMatrixUtil.getOriginY(matrixValues, lp.topMargin);
+            float originX = TagMatrixUtil.getOriginX(matrixValues, location.x);
+            float originY = TagMatrixUtil.getOriginY(matrixValues, location.y);
 
             UploadPhotoTagData uploadPhotoTagData = new UploadPhotoTagData(1,
                     originX / (width),
-                    originY / (heigth));
+                    originY / (heigth),
+                    view.isRight());
             result.add(uploadPhotoTagData);
         }
         return result;
@@ -166,51 +163,28 @@ public class TagContainerView extends FrameLayout {
             @Override
             public void run() {
                 Rect bounds = mTargetImageView.getDrawable().getBounds();
-                int width = bounds.right - bounds.left;
-                int heigth = bounds.bottom - bounds.top;
+                int drawableWidth = bounds.right - bounds.left;
+                int drawableHeight = bounds.bottom - bounds.top;
 
                 float[] matrixValues = new float[9];
                 mTargetImageView.getImageMatrix().getValues(matrixValues);
 
-                float left = TagMatrixUtil.getOriginX(matrixValues, 0);
-                float top = TagMatrixUtil.getOriginY(matrixValues, 0);
-                float right = TagMatrixUtil.getOriginX(matrixValues, mTargetImageView.getWidth());
-                float bottom = TagMatrixUtil.getOriginY(matrixValues, mTargetImageView.getHeight());
-                RectF visibleReact = new RectF(left, top, right, bottom);
-                Log.d(TAG, "loadTags() called with: tagPositions = [" + tagPositions +
-                        "]left = [" + left +
-                        "]top = [" + top +
-                        "]right = [" + right +
-                        "]bottom = [" + bottom +
-                        "]visibleReact = [" + visibleReact + "]");
+                Rect visibleRect = new Rect(0, 0, mTargetImageView.getWidth(), mTargetImageView.getHeight());
 
                 //判断Tag是否在可见范围，仅仅是宽高比严重失调的图 才会出现部分tag不可见。大部分情况下，所有Tag都是在可见范围。
-                //所以在遍历Tag时，还是将每一个Tag的在原图中的位置都计算一遍，以便后面计算margin
+                //所以在遍历Tag时，还是将每一个Tag的在图片中的位置都计算一遍，以便后面计算margin
 
                 for (UploadPhotoTagData tagPosition : tagPositions) {
                     //将百分比换算成具体的像素
-//                    double originX = tagPosition.xPosition * width;
-//                    double originY = tagPosition.yPosition * heigth;
-//                    boolean contains = visibleReact.contains((float) originX, (float) originY);
-//                    if (contains) {
-//                        int offsetX = (int) (originX - left);
-//                        int offsetY = (int) (originY - top);
-//                        offsetX = TagMatrixUtil.getMatrixX(matrixValues, offsetX);
-//                        offsetY = TagMatrixUtil.getMatrixY(matrixValues, offsetY);
-//                        addTag(new Point(offsetX, offsetY));
-//                    }
-
-                    double originX = tagPosition.xPosition * width;
-                    double originY = tagPosition.yPosition * heigth;
+                    double originX = tagPosition.xPosition * drawableWidth;
+                    double originY = tagPosition.yPosition * drawableHeight;
 
                     int offsetX = TagMatrixUtil.getMatrixX(matrixValues, originX);
                     int offsetY = TagMatrixUtil.getMatrixY(matrixValues, originY);
 
-                    Rect visibleRect = new Rect(0, 0, getWidth(), getHeight());
-
                     boolean contains = visibleRect.contains(offsetX, offsetY);
                     if (contains) {
-                        addTag(new Point(offsetX, offsetY));
+                        addTag(new Point(offsetX, offsetY), tagPosition.isRight);
                     }
                 }
             }
