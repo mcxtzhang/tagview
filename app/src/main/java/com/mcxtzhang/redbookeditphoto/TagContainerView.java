@@ -19,8 +19,9 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
+
+import com.mcxtzhang.redbookeditphoto.widget.TagView;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -113,10 +114,8 @@ public class TagContainerView extends FrameLayout {
     }
 
     private void addTag(Point point) {
-        FrameLayout.LayoutParams lp = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.leftMargin = point.x;
-        lp.topMargin = point.y;
-        TextView tagView = new TextView(mContext);
+        TagView tagView = new TagView(mContext);
+        tagView.setOrientationAndPosition(false, point);
         tagView.setText("Gucci");
         tagView.setBackgroundColor(Color.BLUE);
         tagView.setClickable(true);
@@ -134,7 +133,7 @@ public class TagContainerView extends FrameLayout {
             }
         });
 
-        addView(tagView, lp);
+        addView(tagView);
         mTagViewList.add(tagView);
     }
 
@@ -221,10 +220,10 @@ public class TagContainerView extends FrameLayout {
 
 
     private class TagGestureListener implements GestureDetector.OnGestureListener {
-        private View mView;
+        private TagView mView;
         private PointF mLastPointF = new PointF();
 
-        public TagGestureListener(View view) {
+        public TagGestureListener(TagView view) {
             mView = view;
         }
 
@@ -243,7 +242,7 @@ public class TagContainerView extends FrameLayout {
 
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
-            Toast.makeText(mView.getContext(), "旋转", Toast.LENGTH_SHORT).show();
+            mView.changeOrientation();
             return true;
         }
 
