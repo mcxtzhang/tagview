@@ -15,7 +15,7 @@ import android.widget.FrameLayout;
 public class TagView extends android.support.v7.widget.AppCompatTextView {
     private Context mContext;
 
-    private boolean isLeft;
+    private boolean isRight;
     private Point mLocation;
 
     public TagView(Context context) {
@@ -36,15 +36,23 @@ public class TagView extends android.support.v7.widget.AppCompatTextView {
 
     }
 
-    public void setOrientationAndPosition(boolean isLeft, Point point) {
-        this.isLeft = isLeft;
+    public void setOrientationAndPosition(boolean isRight, Point point) {
+        this.isRight = isRight;
         this.mLocation = point;
         updateLocation();
     }
 
     public void changeOrientation() {
-        this.isLeft = !this.isLeft;
+        this.isRight = !this.isRight;
         updateLocation();
+    }
+
+    public boolean isRight() {
+        return isRight;
+    }
+
+    public Point getLocation() {
+        return mLocation;
     }
 
     private void updateLocation() {
@@ -57,10 +65,10 @@ public class TagView extends android.support.v7.widget.AppCompatTextView {
         if (lp == null) {
             lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
-        if (isLeft) {
-            lp.leftMargin = mLocation.x - getMeasuredWidth();
-        } else {
+        if (isRight) {
             lp.leftMargin = mLocation.x;
+        } else {
+            lp.leftMargin = mLocation.x - getMeasuredWidth();
         }
         lp.topMargin = mLocation.y - height / 2;
         setLayoutParams(lp);
