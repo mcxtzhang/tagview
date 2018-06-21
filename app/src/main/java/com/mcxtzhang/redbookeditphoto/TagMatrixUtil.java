@@ -22,28 +22,52 @@ public class TagMatrixUtil {
      * @param x
      * @return
      */
-    public static int getOriginX(float[] matrixValues, int x) {
+    public static float getOriginX(float[] matrixValues, int x) {
         if (null == matrixValues) {
             return -1;
         }
         // 变化的倍数
-        float mscale_x = matrixValues[Matrix.MSCALE_X];
-        float mtrans_x = matrixValues[Matrix.MTRANS_X];
-        x = Math.round(((x - 1 * mtrans_x) / mscale_x));
-        return x;
+        float mScaleX = matrixValues[Matrix.MSCALE_X];
+        float mTransX = matrixValues[Matrix.MTRANS_X];
+        return ((x - 1 * mTransX) / mScaleX);
     }
 
-    public static int getOriginY(float[] matrixValues, int y) {
+    public static float getOriginY(float[] matrixValues, int y) {
         if (null == matrixValues) {
             return -1;
         }
         // 变化的倍数
-        float mscale_y = matrixValues[Matrix.MSCALE_Y];
-        float mtrans_y = matrixValues[Matrix.MTRANS_Y];
-        y = Math.round(((y - 1 * mtrans_y) / mscale_y));
-        return y;
+        float mScaleY = matrixValues[Matrix.MSCALE_Y];
+        float mTransY = matrixValues[Matrix.MTRANS_Y];
+        return ((y - 1 * mTransY) / mScaleY);
     }
 
+    /**
+     * 获取经过Matrix 变换后的坐标
+     *
+     * @param matrixValues
+     * @param x
+     * @return
+     */
+    public static int getMatrixX(float[] matrixValues, double x) {
+        if (null == matrixValues) {
+            return -1;
+        }
+        // 变化的倍数
+        float mScaleX = matrixValues[Matrix.MSCALE_X];
+        float mTransX = matrixValues[Matrix.MTRANS_X];
+        return (int) (x * mScaleX + 1 * mTransX);
+    }
+
+    public static int getMatrixY(float[] matrixValues, double y) {
+        if (null == matrixValues) {
+            return -1;
+        }
+        // 变化的倍数
+        float mScaleY = matrixValues[Matrix.MSCALE_Y];
+        float mTransY = matrixValues[Matrix.MTRANS_Y];
+        return (int) (y * mScaleY + 1 * mTransY);
+    }
 
 //    public static int getOriginX(Matrix imageMatrix, int x) {
 //        imageMatrix.getValues(sMatrixValues);

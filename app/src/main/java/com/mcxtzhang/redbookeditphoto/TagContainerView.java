@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.GestureDetectorCompat;
@@ -17,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,6 +36,7 @@ public class TagContainerView extends FrameLayout {
     private Button mDelButton;
     private GestureDetectorCompat mTagParentGestureDetector;
     private List<View> mTagViewList = new LinkedList<>();
+    private ImageView mTargetImageView;
 
     public TagContainerView(@NonNull Context context) {
         this(context, null);
@@ -46,6 +49,11 @@ public class TagContainerView extends FrameLayout {
     public TagContainerView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context);
+    }
+
+    public TagContainerView setTargetImageView(ImageView targetImageView) {
+        mTargetImageView = targetImageView;
+        return this;
     }
 
     private void init(Context context) {
@@ -130,21 +138,87 @@ public class TagContainerView extends FrameLayout {
         mTagViewList.add(tagView);
     }
 
-    public List<Point> saveTags() {
-        List<Point> result = new LinkedList<>();
+    public List<UploadPhotoTagData> saveTags() {
+        Rect bounds = mTargetImageView.getDrawable().getBounds();
+        int width = bounds.right - bounds.left;
+        int heigth = bounds.bottom - bounds.top;
+
+        float[] matrixValues = new float[9];
+        mTargetImageView.getImageMatrix().getValues(matrixValues);
+
+        List<UploadPhotoTagData> result = new LinkedList<>();
         for (View view : mTagViewList) {
             FrameLayout.LayoutParams lp = (LayoutParams) view.getLayoutParams();
-            result.add(new Point(lp.leftMargin, lp.topMargin));
+
+            float originX = TagMatrixUtil.getOriginX(matrixValues, lp.leftMargin);
+            float originY = TagMatrixUtil.getOriginY(matrixValues, lp.topMargin);
+
+            UploadPhotoTagData uploadPhotoTagData = new UploadPhotoTagData(1,
+                    originX / (width),
+                    originY / (heigth));
+            result.add(uploadPhotoTagData);
         }
         return result;
     }
 
-    public void loadTags(List<Point> tagPositions) {
+    public void loadTags(final List<UploadPhotoTagData> tagPositions) {
         if (null == tagPositions) return;
-        for (Point tagPosition : tagPositions) {
-            addTag(tagPosition);
-        }
+        mTargetImageView.post(new Runnable() {
+            @Override
+            public void run() {
+                Rect bounds = mTargetImageView.getDrawable().getBounds();
+                int width = bounds.right - bounds.left;
+                int heigth = bounds.bottom - bounds.top;
+
+                float[] matrixValues = new float[9];
+                mTargetImageView.getImageMatrix().getValues(matrixValues);
+
+                float left = TagMatrixUtil.getOriginX(matrixValues, 0);
+                float top = TagMatrixUtil.getOriginY(matrixValues, 0);
+                float right = TagMatrixUtil.getOriginX(matrixValues, mTargetImageView.getWidth());
+                float bottom = TagMatrixUtil.getOriginY(matrixValues, mTargetImageView.getHeight());
+                RectF visibleReact = new RectF(left, top, right, bottom);
+                Log.d(TAG, "loadTags() called with: tagPositions = [" + tagPositions +
+                        "]left = [" + left +
+                        "]top = [" + top +
+                        "]right = [" + right +
+                        "]bottom = [" + bottom +
+                        "]visibleReact = [" + visibleReact + "]");
+
+                //判断Tag是否在可见范围，仅仅是宽高比严重失调的图 才会出现部分tag不可见。大部分情况下，所有Tag都是在可见范围。
+                //所以在遍历Tag时，还是将每一个Tag的在原图中的位置都计算一遍，以便后面计算margin
+
+                for (UploadPhotoTagData tagPosition : tagPositions) {
+                    //将百分比换算成具体的像素
+//                    double originX = tagPosition.xPosition * width;
+//                    double originY = tagPosition.yPosition * heigth;
+//                    boolean contains = visibleReact.contains((float) originX, (float) originY);
+//                    if (contains) {
+//                        int offsetX = (int) (originX - left);
+//                        int offsetY = (int) (originY - top);
+//                        offsetX = TagMatrixUtil.getMatrixX(matrixValues, offsetX);
+//                        offsetY = TagMatrixUtil.getMatrixY(matrixValues, offsetY);
+//                        addTag(new Point(offsetX, offsetY));
+//                    }
+
+                    double originX = tagPosition.xPosition * width;
+                    double originY = tagPosition.yPosition * heigth;
+
+                    int offsetX = TagMatrixUtil.getMatrixX(matrixValues, originX);
+                    int offsetY = TagMatrixUtil.getMatrixY(matrixValues, originY);
+
+                    Rect visibleRect = new Rect(0, 0, getWidth(), getHeight());
+
+                    boolean contains = visibleRect.contains(offsetX, offsetY);
+                    if (contains) {
+                        addTag(new Point(offsetX, offsetY));
+                    }
+                }
+            }
+        });
+
     }
+
 
     private class TagGestureListener implements GestureDetector.OnGestureListener {
         private View mView;

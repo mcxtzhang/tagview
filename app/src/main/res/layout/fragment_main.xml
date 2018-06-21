@@ -10,6 +10,7 @@
         android:id="@+id/imageView"
         android:layout_width="match_parent"
         android:layout_height="230dp"
+        android:layout_margin="5dp"
         android:scaleType="centerCrop"
         android:text="Hello World!"
         app:layout_constraintBottom_toBottomOf="parent"
