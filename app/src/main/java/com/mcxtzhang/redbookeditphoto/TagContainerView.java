@@ -9,7 +9,9 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.GestureDetectorCompat;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -114,7 +116,10 @@ public class TagContainerView extends FrameLayout {
 
     private void addTag(Point point, boolean isRight) {
         TagView tagView = new TagView(mContext);
-        tagView.setText("Gucci");
+        DisplayMetrics metrics = mContext.getApplicationContext().getResources().getDisplayMetrics();
+        int left = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, metrics);
+        tagView.setPadding(left, left, left, left);
+        tagView.setText("Gucci Gucci");
         tagView.setBackgroundColor(Color.BLUE);
         tagView.setClickable(true);
         tagView.setOrientationAndPosition(isRight, point);
@@ -233,6 +238,7 @@ public class TagContainerView extends FrameLayout {
             mLastPointF.x = rawX;
             mLastPointF.y = rawY;
 
+            //删除
             Rect rect = new Rect();
             mDelButton.getGlobalVisibleRect(rect);
             Log.d(TAG, "onScroll() called with: rect = [" + rect + "]");

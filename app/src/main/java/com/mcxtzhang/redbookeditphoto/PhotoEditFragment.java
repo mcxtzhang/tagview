@@ -26,9 +26,9 @@ public class PhotoEditFragment extends Fragment {
 
     static {
         TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.4571428596973419, 0.4765799045562744));
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.2380952388048172, 0.5142654180526733));
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.6761904954910278, 0.4939005672931671));
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.46095240116119385, 0.46555766463279724));
+//        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.2380952388048172, 0.5142654180526733));
+//        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.6761904954910278, 0.4939005672931671));
+//        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.46095240116119385, 0.46555766463279724));
     }
 
     public static Map<Integer, List<UploadPhotoTagData>> sIntegerListMap = new HashMap<>();
