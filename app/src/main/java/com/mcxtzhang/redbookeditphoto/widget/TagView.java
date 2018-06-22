@@ -95,18 +95,28 @@ public class TagView extends View {
             default:
                 int computeSize = (getPaddingLeft() + getPaddingRight() + mTextBounds.width());
 
+
                 //边界计算
                 ViewParent parent = getParent();
+                boolean resize = false;
+                int rightSpace = 0;
                 if (parent instanceof ViewGroup) {
                     ViewGroup viewGroup = (ViewGroup) parent;
+                    rightSpace = viewGroup.getWidth() - getLeft();
                     //超出右边界，且能继续缩减
-                    while (computeSize > viewGroup.getWidth() - getLeft() && textShowCount > MIN_TEXT_SHOW_COUNT) {
+                    while (computeSize > rightSpace && textShowCount > MIN_TEXT_SHOW_COUNT) {
+                        resize = true;
                         textShowCount--;
                         mShowText = mText.substring(0, textShowCount) + ELLIPSIS_HINT;
                         mTextPaint.getTextBounds(mShowText, 0, mShowText.length(), mTextBounds);//测量计算文字所在矩形，可以得到宽高
                         computeSize = (getPaddingLeft() + getPaddingRight() + mTextBounds.width());
                     }
+                }
+                if (resize) {
+                    wSize = rightSpace;
+                } else {
                     wSize = computeSize;
+
                 }
 
         }
