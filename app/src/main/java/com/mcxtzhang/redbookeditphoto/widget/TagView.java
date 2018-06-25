@@ -48,6 +48,8 @@ public class TagView extends View {
     private final Rect mTextBounds = new Rect();
     private final Rect mEllipsisBounds = new Rect();
     private String mShowText;
+    //View的最小宽度
+    private int mMinWidth;
 
 
     public TagView(Context context) {
@@ -99,12 +101,12 @@ public class TagView extends View {
                 //边界计算
                 ViewParent parent = getParent();
                 boolean resize = false;
-                int rightSpace = 0;
+                int parentRightSpace = 0;
                 if (parent instanceof ViewGroup) {
                     ViewGroup viewGroup = (ViewGroup) parent;
-                    rightSpace = viewGroup.getWidth() - getLeft();
+                    parentRightSpace = viewGroup.getWidth() - viewGroup.getPaddingRight() - getLeft();
                     //超出右边界，且能继续缩减
-                    while (computeSize > rightSpace && textShowCount > MIN_TEXT_SHOW_COUNT) {
+                    while (computeSize > parentRightSpace && textShowCount > MIN_TEXT_SHOW_COUNT) {
                         resize = true;
                         textShowCount--;
                         mShowText = mText.substring(0, textShowCount) + ELLIPSIS_HINT;
@@ -113,10 +115,9 @@ public class TagView extends View {
                     }
                 }
                 if (resize) {
-                    wSize = rightSpace;
+                    wSize = parentRightSpace;
                 } else {
                     wSize = computeSize;
-
                 }
 
         }
@@ -193,9 +194,19 @@ public class TagView extends View {
 
     public TagView setText(String text) {
         mText = text;
+        computeMinWidth();
         requestLayout();
         invalidate();
         return this;
+    }
+
+    public int getMinWidth() {
+        return mMinWidth;
+    }
+
+    private void computeMinWidth() {
+        mTextPaint.getTextBounds(mText.substring(0, MIN_TEXT_SHOW_COUNT) + ELLIPSIS_HINT, 0, MIN_TEXT_SHOW_COUNT + ELLIPSIS_HINT.length(), mTextBounds);//测量计算文字所在矩形，可以得到宽高
+        mMinWidth = getPaddingLeft() + getPaddingRight() + mTextBounds.width();
     }
 
     private void updateLocation() {

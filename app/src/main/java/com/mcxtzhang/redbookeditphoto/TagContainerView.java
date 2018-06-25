@@ -117,7 +117,7 @@ public class TagContainerView extends FrameLayout {
     private void addTag(Point point, boolean isRight) {
         TagView tagView = new TagView(mContext);
         DisplayMetrics metrics = mContext.getApplicationContext().getResources().getDisplayMetrics();
-        int left = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, metrics);
+        int left = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40, metrics);
         tagView.setPadding(left, left, left, left);
         tagView.setText("Gucci Gucci");
         tagView.setBackgroundColor(Color.BLUE);
@@ -260,11 +260,25 @@ public class TagContainerView extends FrameLayout {
             return false;
         }
 
-        private void moveTouchView(View v, int gapX, int gapY) {
+        private void moveTouchView(TagView v, int gapX, int gapY) {
             //v.layout(v.getLeft() + gapX, v.getTop() + gapY, v.getLeft() + gapX + v.getWidth(), v.getTop() + gapY + getHeight());
             FrameLayout.LayoutParams lp = (LayoutParams) v.getLayoutParams();
+            Log.d(TAG, "moveTouchView() called with: getLeft = [" + v.getLeft() + "], TagContainerView.this.getPaddingLeft() = [" + TagContainerView.this.getPaddingLeft() + "], lp.leftMargin = [" + lp.leftMargin + "]");
+
             lp.leftMargin = lp.leftMargin + gapX;
             lp.topMargin = lp.topMargin + gapY;
+
+            //边界修正
+            //right
+            int parentWidth = TagContainerView.this.getWidth();
+            int parentPaddingRight = TagContainerView.this.getPaddingRight();
+            int parentPaddingLeft = TagContainerView.this.getPaddingLeft();
+            int parentRightSpace = parentWidth - parentPaddingRight - lp.leftMargin - parentPaddingLeft;
+            int gap = parentRightSpace - v.getMinWidth();
+            if (gap < 0) {
+                lp.leftMargin = lp.leftMargin + gap;
+            }
+
             v.setLayoutParams(lp);
         }
     }
