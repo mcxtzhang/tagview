@@ -261,25 +261,27 @@ public class TagContainerView extends FrameLayout {
         }
 
         private void moveTouchView(TagView v, int gapX, int gapY) {
-            //v.layout(v.getLeft() + gapX, v.getTop() + gapY, v.getLeft() + gapX + v.getWidth(), v.getTop() + gapY + getHeight());
-            FrameLayout.LayoutParams lp = (LayoutParams) v.getLayoutParams();
-            Log.d(TAG, "moveTouchView() called with: getLeft = [" + v.getLeft() + "], TagContainerView.this.getPaddingLeft() = [" + TagContainerView.this.getPaddingLeft() + "], lp.leftMargin = [" + lp.leftMargin + "]");
-
-            lp.leftMargin = lp.leftMargin + gapX;
-            lp.topMargin = lp.topMargin + gapY;
-
             //边界修正
             //right
             int parentWidth = TagContainerView.this.getWidth();
             int parentPaddingRight = TagContainerView.this.getPaddingRight();
-            int parentPaddingLeft = TagContainerView.this.getPaddingLeft();
-            int parentRightSpace = parentWidth - parentPaddingRight - lp.leftMargin - parentPaddingLeft;
-            int gap = parentRightSpace - v.getMinWidth();
+            int parentRightSpace = parentWidth - parentPaddingRight - v.getLeft();
+            int gap = parentRightSpace - v.getMinWidth() - gapX;
             if (gap < 0) {
-                lp.leftMargin = lp.leftMargin + gap;
+                gapX += gap;
             }
 
-            v.setLayoutParams(lp);
+            v.updatePosition(gapX, gapY);
+
+
+            //v.layout(v.getLeft() + gapX, v.getTop() + gapY, v.getLeft() + gapX + v.getWidth(), v.getTop() + gapY + getHeight());
+//            FrameLayout.LayoutParams lp = (LayoutParams) v.getLayoutParams();
+//
+//            lp.leftMargin = lp.leftMargin + gapX;
+//            lp.topMargin = lp.topMargin + gapY;
+//
+//
+//            v.setLayoutParams(lp);
         }
     }
 

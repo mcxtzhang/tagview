@@ -180,6 +180,20 @@ public class TagView extends View {
         updateLocation();
     }
 
+    public void updatePosition(int distanceX, int distanceY) {
+        mLocation.x += distanceX;
+        mLocation.y += distanceY;
+        updateLocation();
+    }
+
+    public TagView setText(String text) {
+        mText = text;
+        computeMinWidth();
+        requestLayout();
+        invalidate();
+        return this;
+    }
+
     public boolean isRight() {
         return isRight;
     }
@@ -190,14 +204,6 @@ public class TagView extends View {
 
     public String getText() {
         return mText;
-    }
-
-    public TagView setText(String text) {
-        mText = text;
-        computeMinWidth();
-        requestLayout();
-        invalidate();
-        return this;
     }
 
     public int getMinWidth() {
@@ -226,6 +232,7 @@ public class TagView extends View {
         }
         lp.topMargin = mLocation.y - height / 2;
         setLayoutParams(lp);
+        //requestLayout();
 
     }
 }
