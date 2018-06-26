@@ -119,6 +119,7 @@ public class TagContainerView extends FrameLayout {
         DisplayMetrics metrics = mContext.getApplicationContext().getResources().getDisplayMetrics();
         int left = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40, metrics);
         tagView.setPadding(left, left, left, left);
+        tagView.setParent(this);
         tagView.setText("Gucci Gucci");
         tagView.setBackgroundColor(Color.BLUE);
         tagView.setClickable(true);
@@ -262,14 +263,46 @@ public class TagContainerView extends FrameLayout {
 
         private void moveTouchView(TagView v, int gapX, int gapY) {
             //边界修正
-            //right
+            //top
+            int parentTopSpace = v.getTop() - TagContainerView.this.getPaddingTop() + gapY;
+            if (parentTopSpace < 0) {
+                gapY -= parentTopSpace;
+            }
+            //bottom
+            int parentBottomSpace = TagContainerView.this.getHeight() - TagContainerView.this.getPaddingBottom() - v.getBottom() - gapY;
+            if (parentBottomSpace < 0) {
+                gapY += parentBottomSpace;
+            }
             int parentWidth = TagContainerView.this.getWidth();
             int parentPaddingRight = TagContainerView.this.getPaddingRight();
-            int parentRightSpace = parentWidth - parentPaddingRight - v.getLeft();
-            int gap = parentRightSpace - v.getMinWidth() - gapX;
-            if (gap < 0) {
-                gapX += gap;
+            int parentPaddingLeft = TagContainerView.this.getPaddingLeft();
+
+            if (v.isRight()) {
+                //right
+                int parentRightSpace = parentWidth - parentPaddingRight - v.getLeft();
+                parentRightSpace = parentRightSpace - v.getMinWidth() - gapX;
+                if (parentRightSpace < 0) {
+                    gapX += parentRightSpace;
+                }
+                //left
+                int parentLeftSpace = v.getLeft() - parentPaddingLeft + gapX;
+                if (parentLeftSpace < 0) {
+                    gapX -= parentLeftSpace;
+                }
+
+            } else {
+                //left
+                int parentLeftSpace = v.getRight() - parentPaddingLeft - v.getMinWidth() + gapX;
+                if (parentLeftSpace < 0) {
+                    gapX -= parentLeftSpace;
+                }
+                //right
+                int parentRightSpace = parentWidth - parentPaddingRight - v.getRight() - gapX;
+                if (parentRightSpace < 0) {
+                    gapX += parentRightSpace;
+                }
             }
+
 
             v.updatePosition(gapX, gapY);
 

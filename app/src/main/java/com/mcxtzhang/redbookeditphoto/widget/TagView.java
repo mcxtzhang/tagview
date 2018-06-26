@@ -7,10 +7,12 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -29,7 +31,7 @@ public class TagView extends View {
      */
     private boolean isRight;
     private Point mLocation;
-    private String mText;
+    private String mText = "";
     /**
      * 可通过xml修改的配置
      */
@@ -50,6 +52,8 @@ public class TagView extends View {
     private String mShowText;
     //View的最小宽度
     private int mMinWidth;
+
+    private ViewGroup mParent;
 
 
     public TagView(Context context) {
@@ -97,25 +101,41 @@ public class TagView extends View {
             default:
                 int computeSize = (getPaddingLeft() + getPaddingRight() + mTextBounds.width());
 
-
                 //边界计算
                 ViewParent parent = getParent();
                 boolean resize = false;
-                int parentRightSpace = 0;
                 if (parent instanceof ViewGroup) {
                     ViewGroup viewGroup = (ViewGroup) parent;
-                    parentRightSpace = viewGroup.getWidth() - viewGroup.getPaddingRight() - getLeft();
-                    //超出右边界，且能继续缩减
-                    while (computeSize > parentRightSpace && textShowCount > MIN_TEXT_SHOW_COUNT) {
-                        resize = true;
-                        textShowCount--;
-                        mShowText = mText.substring(0, textShowCount) + ELLIPSIS_HINT;
-                        mTextPaint.getTextBounds(mShowText, 0, mShowText.length(), mTextBounds);//测量计算文字所在矩形，可以得到宽高
-                        computeSize = (getPaddingLeft() + getPaddingRight() + mTextBounds.width());
+                    int parentSpace = 0;
+
+                    if (isRight) {
+                        parentSpace = viewGroup.getWidth() - viewGroup.getPaddingRight() - getLeft();
+                        //超出右边界，且能继续缩减
+                        while (computeSize > parentSpace && textShowCount > MIN_TEXT_SHOW_COUNT) {
+                            resize = true;
+                            textShowCount--;
+                            mShowText = mText.substring(0, textShowCount) + ELLIPSIS_HINT;
+                            mTextPaint.getTextBounds(mShowText, 0, mShowText.length(), mTextBounds);//测量计算文字所在矩形，可以得到宽高
+                            computeSize = (getPaddingLeft() + getPaddingRight() + mTextBounds.width());
+                        }
+
+                    } else {
+                        parentSpace = getRight() - viewGroup.getPaddingLeft();
+                        //超出左边界，且能继续缩减
+                        while (computeSize > parentSpace && textShowCount > MIN_TEXT_SHOW_COUNT) {
+                            resize = true;
+                            textShowCount--;
+                            mShowText = mText.substring(0, textShowCount) + ELLIPSIS_HINT;
+                            mTextPaint.getTextBounds(mShowText, 0, mShowText.length(), mTextBounds);//测量计算文字所在矩形，可以得到宽高
+                            computeSize = (getPaddingLeft() + getPaddingRight() + mTextBounds.width());
+                        }
                     }
-                }
-                if (resize) {
-                    wSize = parentRightSpace;
+                    //如果resize过，说明接近边缘
+                    if (resize) {
+                        wSize = parentSpace;
+                    } else {
+                        wSize = computeSize;
+                    }
                 } else {
                     wSize = computeSize;
                 }
@@ -125,11 +145,11 @@ public class TagView extends View {
             case MeasureSpec.EXACTLY:
                 break;
             case MeasureSpec.AT_MOST:
-                int computeSize = (int) (getPaddingTop() + getPaddingBottom() + mTextBounds.height());
+                int computeSize = (getPaddingTop() + getPaddingBottom() + mTextBounds.height());
                 hSize = computeSize < hSize ? computeSize : hSize;
                 break;
             case MeasureSpec.UNSPECIFIED:
-                computeSize = (int) (getPaddingTop() + getPaddingBottom() + mTextBounds.height());
+                computeSize = (getPaddingTop() + getPaddingBottom() + mTextBounds.height());
                 hSize = computeSize;
                 break;
         }
@@ -187,10 +207,18 @@ public class TagView extends View {
     }
 
     public TagView setText(String text) {
+        if (TextUtils.isEmpty(text)) {
+            return this;
+        }
         mText = text;
         computeMinWidth();
         requestLayout();
         invalidate();
+        return this;
+    }
+
+    public TagView setParent(ViewGroup viewGroup) {
+        mParent = viewGroup;
         return this;
     }
 
@@ -211,8 +239,20 @@ public class TagView extends View {
     }
 
     private void computeMinWidth() {
-        mTextPaint.getTextBounds(mText.substring(0, MIN_TEXT_SHOW_COUNT) + ELLIPSIS_HINT, 0, MIN_TEXT_SHOW_COUNT + ELLIPSIS_HINT.length(), mTextBounds);//测量计算文字所在矩形，可以得到宽高
-        mMinWidth = getPaddingLeft() + getPaddingRight() + mTextBounds.width();
+        int paddingLeft = getPaddingLeft();
+        int paddingRight = getPaddingRight();
+        int textLength = mText.length();
+
+        int minShowLength = textLength > MIN_TEXT_SHOW_COUNT ? MIN_TEXT_SHOW_COUNT : textLength;
+        mTextPaint.getTextBounds(mText.substring(0, minShowLength) + ELLIPSIS_HINT, 0, minShowLength + ELLIPSIS_HINT.length(), mTextBounds);//测量计算文字所在矩形，可以得到宽高
+        mMinWidth = paddingLeft + paddingRight + mTextBounds.width();
+
+//        if (textLength > MAX_TEXT_SHOW_COUNT) {
+//            mTextPaint.getTextBounds(mText.substring(0, MAX_TEXT_SHOW_COUNT) + ELLIPSIS_HINT, 0, MAX_TEXT_SHOW_COUNT + ELLIPSIS_HINT.length(), mTextBounds);//测量计算文字所在矩形，可以得到宽高
+//        } else {
+//            mTextPaint.getTextBounds(mText, 0, textLength, mTextBounds);//测量计算文字所在矩形，可以得到宽高
+//        }
+//        mMaxWidth = paddingLeft + paddingRight + mTextBounds.width();
     }
 
     private void updateLocation() {
@@ -226,9 +266,11 @@ public class TagView extends View {
             lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
         if (isRight) {
+            lp.gravity = Gravity.LEFT;
             lp.leftMargin = mLocation.x;
         } else {
-            lp.leftMargin = mLocation.x - getMeasuredWidth();
+            lp.gravity = Gravity.RIGHT;
+            lp.rightMargin = mParent.getWidth() - mParent.getPaddingRight() - mParent.getPaddingLeft() - mLocation.x;
         }
         lp.topMargin = mLocation.y - height / 2;
         setLayoutParams(lp);
