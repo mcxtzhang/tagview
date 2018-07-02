@@ -81,7 +81,7 @@ public class TagView extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        Log.d(TAG, "onMeasure() called with: getLeft = [" + getLeft() + "], getTop = [" + getTop() + "]");
+        Log.d(TAG, "onMeasure() called with: getLeft = [" + getLeft() + "], getTop = [" + getTop() + "]" + "], getRight = [" + getRight());
         int wMode = MeasureSpec.getMode(widthMeasureSpec);
         int wSize = MeasureSpec.getSize(widthMeasureSpec);
         int hMode = MeasureSpec.getMode(heightMeasureSpec);
@@ -109,7 +109,12 @@ public class TagView extends View {
                     int parentSpace = 0;
 
                     if (isRight) {
-                        parentSpace = viewGroup.getWidth() - viewGroup.getPaddingRight() - getLeft();
+                        if (getLeft() == 0) {
+                            parentSpace = viewGroup.getWidth() - viewGroup.getPaddingLeft() - viewGroup.getPaddingRight();
+                        } else {
+                            parentSpace = viewGroup.getWidth() - viewGroup.getPaddingRight() - getLeft();
+                        }
+
                         //超出右边界，且能继续缩减
                         while (computeSize > parentSpace && textShowCount > MIN_TEXT_SHOW_COUNT) {
                             resize = true;
@@ -120,7 +125,11 @@ public class TagView extends View {
                         }
 
                     } else {
-                        parentSpace = getRight() - viewGroup.getPaddingLeft();
+                        if (getRight() == 0) {
+                            parentSpace = viewGroup.getWidth() - viewGroup.getPaddingLeft() - viewGroup.getPaddingRight();
+                        } else {
+                            parentSpace = getRight() - viewGroup.getPaddingLeft();
+                        }
                         //超出左边界，且能继续缩减
                         while (computeSize > parentSpace && textShowCount > MIN_TEXT_SHOW_COUNT) {
                             resize = true;

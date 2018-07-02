@@ -20,7 +20,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.mcxtzhang.redbookeditphoto.widget.TagView;
 
@@ -76,8 +75,14 @@ public class TagContainerView extends FrameLayout {
 
             @Override
             public boolean onSingleTapUp(MotionEvent e) {
-                Toast.makeText(getContext(), "点击", Toast.LENGTH_SHORT).show();
-                addTag(new Point((int) e.getX(), (int) e.getY()), true);
+                int x = (int) e.getX();
+                int y = (int) e.getY();
+                boolean isRight = false;
+                int containerWidth = getWidth();
+                if (containerWidth / 2 > x) {
+                    isRight = true;
+                }
+                addTag(new Point(x, y), isRight);
                 return true;
             }
 
@@ -117,8 +122,8 @@ public class TagContainerView extends FrameLayout {
     private void addTag(Point point, boolean isRight) {
         TagView tagView = new TagView(mContext);
         DisplayMetrics metrics = mContext.getApplicationContext().getResources().getDisplayMetrics();
-        int left = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40, metrics);
-        tagView.setPadding(left, left, left, left);
+        int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, metrics);
+        tagView.setPadding(padding, padding, padding, padding);
         tagView.setParent(this);
         tagView.setText("Gucci Gucci");
         tagView.setBackgroundColor(Color.BLUE);
