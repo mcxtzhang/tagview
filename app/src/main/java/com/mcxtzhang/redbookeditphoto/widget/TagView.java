@@ -206,12 +206,20 @@ public class TagView extends View {
 
     public void changeOrientation() {
         this.isRight = !this.isRight;
+        fixLocation();
         updateLocation();
+        post(new Runnable() {
+            @Override
+            public void run() {
+                requestLayout();
+            }
+        });
     }
 
     public void updatePosition(int distanceX, int distanceY) {
         mLocation.x += distanceX;
         mLocation.y += distanceY;
+        fixLocation();
         updateLocation();
     }
 
@@ -264,6 +272,53 @@ public class TagView extends View {
 //        mMaxWidth = paddingLeft + paddingRight + mTextBounds.width();
     }
 
+    private void fixLocation() {
+        int parentWidth = mParent.getWidth();
+        int parentPaddingRight = mParent.getPaddingRight();
+        int parentPaddingLeft = mParent.getPaddingLeft();
+        int parentPaddingBottom = mParent.getPaddingBottom();
+        int parentPaddingTop = mParent.getPaddingTop();
+
+        int height = getMeasuredHeight();
+        //边界修正
+        int topMargin = mLocation.y - height / 2;
+        //top
+        int parentTopSpace = topMargin;
+        if (parentTopSpace < 0) {
+            mLocation.y -= parentTopSpace;
+        }
+        //bottom
+        int parentBottomSpace = mParent.getHeight() - parentPaddingBottom - parentPaddingTop - topMargin - height;
+        if (parentBottomSpace < 0) {
+            mLocation.y += parentBottomSpace;
+        }
+
+        if (isRight) {
+            //right
+            int parentRightSpace = parentWidth - parentPaddingRight - parentPaddingLeft;
+            parentRightSpace = parentRightSpace - mMinWidth - mLocation.x;
+            if (parentRightSpace < 0) {
+                mLocation.x += parentRightSpace;
+            }
+            //left
+            if (mLocation.x < 0) {
+                mLocation.x = 0;
+            }
+
+        } else {
+            //left
+            int parentLeftSpace = mLocation.x - mMinWidth;
+            if (parentLeftSpace < 0) {
+                mLocation.x -= parentLeftSpace;
+            }
+            //right
+            int parentRightSpace = parentWidth - parentPaddingRight - parentPaddingLeft - mLocation.x;
+            if (parentRightSpace < 0) {
+                mLocation.x += parentRightSpace;
+            }
+        }
+    }
+
     private void updateLocation() {
         int height = getMeasuredHeight();
         if (height == 0) {
@@ -282,8 +337,7 @@ public class TagView extends View {
             lp.rightMargin = mParent.getWidth() - mParent.getPaddingRight() - mParent.getPaddingLeft() - mLocation.x;
         }
         lp.topMargin = mLocation.y - height / 2;
-        setLayoutParams(lp);
-        //requestLayout();
 
+        setLayoutParams(lp);
     }
 }
