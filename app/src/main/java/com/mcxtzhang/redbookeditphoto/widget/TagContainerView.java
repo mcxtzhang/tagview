@@ -37,6 +37,7 @@ public class TagContainerView extends FrameLayout {
 
     private Context mContext;
     private Button mDelButton;
+    private boolean isDeled;
     private GestureDetectorCompat mTagParentGestureDetector;
     private List<TagView> mTagViewList = new LinkedList<>();
     private ImageView mTargetImageView;
@@ -117,6 +118,8 @@ public class TagContainerView extends FrameLayout {
                 mMatrix.postTranslate(0, distanceY);
                 mTargetImageView.setImageMatrix(mMatrix);
 
+                //移动屏幕上的tag
+                moveAllTags(Math.round(distanceY));
                 return false;
             }
 
@@ -166,9 +169,24 @@ public class TagContainerView extends FrameLayout {
     }
 
     @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        switch (ev.getAction()) {
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                isDeled = false;
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    @Override
     public boolean onTouchEvent(MotionEvent event) {
         Log.d(TAG, "onTouchEvent() called with: event = [" + event + "]");
-        return mTagParentGestureDetector.onTouchEvent(event);
+        if (isDeled) {
+            return true;
+        } else {
+            return mTagParentGestureDetector.onTouchEvent(event);
+
+        }
     }
 
     private void addTag(Point point, boolean isRight) {
@@ -194,6 +212,26 @@ public class TagContainerView extends FrameLayout {
 
         addView(tagView);
         mTagViewList.add(tagView);
+    }
+
+    private void moveTouchView(TagView v, int gapX, int gapY) {
+        v.updatePosition(gapX, gapY);
+
+
+        //v.layout(v.getLeft() + gapX, v.getTop() + gapY, v.getLeft() + gapX + v.getWidth(), v.getTop() + gapY + getHeight());
+//            FrameLayout.LayoutParams lp = (LayoutParams) v.getLayoutParams();
+//
+//            lp.leftMargin = lp.leftMargin + gapX;
+//            lp.topMargin = lp.topMargin + gapY;
+//
+//
+//            v.setLayoutParams(lp);
+    }
+
+    private void moveAllTags(int distanceY) {
+        for (TagView tagView : mTagViewList) {
+            moveTouchView(tagView, 0, distanceY);
+        }
     }
 
     public List<UploadPhotoTagData> saveTags() {
@@ -301,6 +339,7 @@ public class TagContainerView extends FrameLayout {
             mDelButton.getGlobalVisibleRect(rect);
             Log.d(TAG, "onScroll() called with: rect = [" + rect + "]");
             if (rect.contains((int) rawX, (int) rawY)) {
+                isDeled = true;
                 removeView(mView);
                 mTagViewList.remove(mView);
                 return false;
@@ -316,20 +355,6 @@ public class TagContainerView extends FrameLayout {
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             return false;
-        }
-
-        private void moveTouchView(TagView v, int gapX, int gapY) {
-            v.updatePosition(gapX, gapY);
-
-
-            //v.layout(v.getLeft() + gapX, v.getTop() + gapY, v.getLeft() + gapX + v.getWidth(), v.getTop() + gapY + getHeight());
-//            FrameLayout.LayoutParams lp = (LayoutParams) v.getLayoutParams();
-//
-//            lp.leftMargin = lp.leftMargin + gapX;
-//            lp.topMargin = lp.topMargin + gapY;
-//
-//
-//            v.setLayoutParams(lp);
         }
     }
 
