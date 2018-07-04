@@ -1,4 +1,4 @@
-package com.mcxtzhang.redbookeditphoto;
+package com.mcxtzhang.redbookeditphoto.widget;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -21,7 +21,8 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
-import com.mcxtzhang.redbookeditphoto.widget.TagView;
+import com.mcxtzhang.redbookeditphoto.TagMatrixUtil;
+import com.mcxtzhang.redbookeditphoto.UploadPhotoTagData;
 
 import java.util.LinkedList;
 import java.util.List;

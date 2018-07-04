@@ -18,12 +18,12 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:src="@drawable/vertical" />
 
-    <com.mcxtzhang.redbookeditphoto.TagContainerView
+    <com.mcxtzhang.redbookeditphoto.widget.TagContainerView
         android:id="@+id/tagContainer"
         android:layout_width="match_parent"
         android:layout_height="350dp"
         android:padding="10dp">
 
-    </com.mcxtzhang.redbookeditphoto.TagContainerView>
+    </com.mcxtzhang.redbookeditphoto.widget.TagContainerView>
 
 </FrameLayout>
