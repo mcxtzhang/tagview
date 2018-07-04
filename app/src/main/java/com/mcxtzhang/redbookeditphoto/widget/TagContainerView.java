@@ -2,6 +2,7 @@ package com.mcxtzhang.redbookeditphoto.widget;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -39,6 +40,11 @@ public class TagContainerView extends FrameLayout {
     private GestureDetectorCompat mTagParentGestureDetector;
     private List<TagView> mTagViewList = new LinkedList<>();
     private ImageView mTargetImageView;
+    private int mImageViewHeight;
+    private float mImageDrawableHeight;
+    private final Matrix mMatrix = new Matrix();
+    private final float[] mMatrixValues = new float[9];
+
 
     public TagContainerView(@NonNull Context context) {
         this(context, null);
@@ -53,8 +59,21 @@ public class TagContainerView extends FrameLayout {
         init(context);
     }
 
+
     public TagContainerView setTargetImageView(ImageView targetImageView) {
+        if (null == targetImageView) return this;
         mTargetImageView = targetImageView;
+
+        mTargetImageView.post(new Runnable() {
+            @Override
+            public void run() {
+                mTargetImageView.setScaleType(ImageView.ScaleType.MATRIX);
+                mImageDrawableHeight = mTargetImageView.getDrawable().getBounds().height();
+                mImageViewHeight = mTargetImageView.getHeight();
+            }
+        });
+
+
         return this;
     }
 
@@ -89,7 +108,39 @@ public class TagContainerView extends FrameLayout {
 
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                Log.d(TAG, "mTagParentGestureDetector onScroll() called with: e1 = [" + e1 + "], e2 = [" + e2 + "], distanceX = [" + distanceX + "], distanceY = [" + distanceY + "]");
+
+                //在当前基础上移动
+                mMatrix.set(mTargetImageView.getImageMatrix());
+                mMatrix.getValues(mMatrixValues);
+                distanceY = checkDyBound(mMatrixValues, -distanceY);
+                mMatrix.postTranslate(0, distanceY);
+                mTargetImageView.setImageMatrix(mMatrix);
+
                 return false;
+            }
+
+            /**
+             *  和当前矩阵对比，检验dy，使图像移动后不会超出ImageView边界
+             *  @param values
+             *  @param dy
+             *  @return
+             */
+            private float checkDyBound(float[] values, float dy) {
+                //Log.d(TAG, "checkDyBound() called with: values = [" + values + "], dy = [" + dy + "]");
+                //Log.d(TAG, "checkDyBound() called with: mImageHeight = [" + mImageHeight + "], height = [" + height + "]");
+                if (mImageDrawableHeight * values[Matrix.MSCALE_Y] < mImageViewHeight)
+                    return 0;
+                float translationY = values[Matrix.MTRANS_Y] + dy;
+                //上边缘
+                if (translationY > 0) {
+                    dy = -values[Matrix.MTRANS_Y];
+                }
+                //下边缘
+                else if (translationY < -(mImageDrawableHeight * values[Matrix.MSCALE_Y] - mImageViewHeight)) {
+                    dy = -(mImageDrawableHeight * values[Matrix.MSCALE_Y] - mImageViewHeight) - values[Matrix.MTRANS_Y];
+                }
+                return dy;
             }
 
             @Override
