@@ -230,7 +230,7 @@ public class TagContainerView extends FrameLayout {
 
     private void moveAllTags(int distanceY) {
         for (TagView tagView : mTagViewList) {
-            moveTouchView(tagView, 0, distanceY);
+            tagView.updatePositionWithoutFix(0, distanceY);
         }
     }
 
@@ -283,10 +283,12 @@ public class TagContainerView extends FrameLayout {
                     int offsetX = TagMatrixUtil.getMatrixX(matrixValues, originX);
                     int offsetY = TagMatrixUtil.getMatrixY(matrixValues, originY);
 
-                    boolean contains = visibleRect.contains(offsetX, offsetY);
+                    /*boolean contains = visibleRect.contains(offsetX, offsetY);
                     if (contains) {
                         addTag(new Point(offsetX, offsetY), tagPosition.isRight);
-                    }
+                    }*/
+                    addTag(new Point(offsetX, offsetY), tagPosition.isRight);
+
                 }
             }
         });
