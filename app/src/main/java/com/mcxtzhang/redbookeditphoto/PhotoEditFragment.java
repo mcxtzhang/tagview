@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -73,6 +74,13 @@ public class PhotoEditFragment extends Fragment {
         } else {
             mImageView.setImageResource(R.drawable.horizontal);
         }
+        mImageView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                Log.e("TAG", "onTouch: ");
+                return false;
+            }
+        });
 
         mImageView.post(new Runnable() {
             @Override
@@ -117,7 +125,7 @@ public class PhotoEditFragment extends Fragment {
 
 
         mTagContainerView = rootView.findViewById(R.id.tagContainer);
-        mTagContainerView.setTargetImageView(mImageView);
+        mTagContainerView.bindImageView(mImageView);
 
         List<UploadPhotoTagData> points = sIntegerListMap.get(mPosition);
         if (points == null && mPosition == 0) {

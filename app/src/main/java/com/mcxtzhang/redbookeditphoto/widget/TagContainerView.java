@@ -35,6 +35,10 @@ public class TagContainerView extends FrameLayout {
     private static final String TAG = TagContainerView.class.getSimpleName();
 
     private Context mContext;
+    public static final int MODE_EDIT = 0;
+    public static final int MODE_VIEW = 1;
+    private int mode = MODE_VIEW;
+
     private Button mDelButton;
     private GestureDetectorCompat mTagParentGestureDetector;
     private List<TagView> mTagViewList = new LinkedList<>();
@@ -53,8 +57,21 @@ public class TagContainerView extends FrameLayout {
         init(context);
     }
 
-    public TagContainerView setTargetImageView(ImageView targetImageView) {
+    public TagContainerView bindImageView(ImageView targetImageView) {
         mTargetImageView = targetImageView;
+        post(new Runnable() {
+            @Override
+            public void run() {
+                ViewGroup.LayoutParams layoutParams = getLayoutParams();
+                if (null == layoutParams) {
+                    layoutParams = new ViewGroup.LayoutParams(mTargetImageView.getWidth(), mTargetImageView.getHeight());
+                } else {
+                    layoutParams.height = mTargetImageView.getHeight();
+                    layoutParams.width = mTargetImageView.getWidth();
+                }
+                setLayoutParams(layoutParams);
+            }
+        });
         return this;
     }
 
@@ -76,14 +93,23 @@ public class TagContainerView extends FrameLayout {
 
             @Override
             public boolean onSingleTapUp(MotionEvent e) {
-                int x = (int) e.getX();
-                int y = (int) e.getY();
-                boolean isRight = false;
-                int containerWidth = getWidth();
-                if (containerWidth / 2 > x) {
-                    isRight = true;
+                if (mode == MODE_EDIT) {
+                    int x = (int) e.getX();
+                    int y = (int) e.getY();
+                    boolean isRight = false;
+                    int containerWidth = getWidth();
+                    if (containerWidth / 2 > x) {
+                        isRight = true;
+                    }
+                    addTag(new Point(x, y), isRight);
+                } else {
+//                    if (getVisibility() != View.INVISIBLE) {
+//                        setVisibility(View.INVISIBLE);
+//                    } else {
+//                        setVisibility(View.VISIBLE);
+//                    }
                 }
-                addTag(new Point(x, y), isRight);
+
                 return true;
             }
 
@@ -107,6 +133,9 @@ public class TagContainerView extends FrameLayout {
     }
 
     private void createDelButton() {
+        if (mode == MODE_VIEW) {
+            return;
+        }
         mDelButton = new Button(mContext);
         mDelButton.setText("删除");
         FrameLayout.LayoutParams lp = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -131,16 +160,18 @@ public class TagContainerView extends FrameLayout {
         tagView.setClickable(true);
         tagView.setOrientationAndPosition(isRight, point);
 
-        final GestureDetectorCompat gestureDetectorCompat = new GestureDetectorCompat(mContext, new TagGestureListener(tagView));
-        gestureDetectorCompat.setIsLongpressEnabled(false);
-        tagView.setOnTouchListener(new OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent ev) {
-                Log.i(TAG, "onTouch() called with: v = [" + v + "], ev = [" + ev + "]");
-                return gestureDetectorCompat.onTouchEvent(ev);
-            }
-        });
+        if (mode == MODE_EDIT) {
+            final GestureDetectorCompat gestureDetectorCompat = new GestureDetectorCompat(mContext, new TagGestureListener(tagView));
+            gestureDetectorCompat.setIsLongpressEnabled(false);
+            tagView.setOnTouchListener(new OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent ev) {
+                    Log.i(TAG, "onTouch() called with: v = [" + v + "], ev = [" + ev + "]");
+                    return gestureDetectorCompat.onTouchEvent(ev);
+                }
+            });
 
+        }
         addView(tagView);
         mTagViewList.add(tagView);
     }
