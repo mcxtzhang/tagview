@@ -1,27 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
     <android.support.v4.view.ViewPager
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@id/btnAddTag">
 
     </android.support.v4.view.ViewPager>
 
     <Button
-        android:layout_width="wrap_content"
+        android:id="@+id/btnAddTag"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:text="添加标签" />
+        android:background="@color/colorPrimaryDark"
+        android:text="添加标签"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1" />
 
     <Button
         android:id="@+id/btnSave"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:text="保存" />
+        android:layout_marginBottom="10dp"
+        android:background="@android:color/transparent"
+        android:text="添加标签可以获得更多赞"
+        android:textColor="#CCCCCC"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toTopOf="@id/btnAddTag" />
 
-</LinearLayout>
+
+    <!--    <Button
+            android:id="@+id/btnSave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="保存" />-->
+
+</android.support.constraint.ConstraintLayout>

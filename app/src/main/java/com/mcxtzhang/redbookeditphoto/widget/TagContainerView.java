@@ -38,7 +38,7 @@ public class TagContainerView extends FrameLayout {
     private Context mContext;
     public static final int MODE_EDIT = 0;
     public static final int MODE_VIEW = 1;
-    private int mode = MODE_VIEW;
+    private int mode = MODE_EDIT;
 
     private Button mDelButton;
     private boolean isDeled;
@@ -74,14 +74,14 @@ public class TagContainerView extends FrameLayout {
                 mImageDrawableHeight = mTargetImageView.getDrawable().getBounds().height();
                 mImageViewHeight = mTargetImageView.getHeight();
 
-                ViewGroup.LayoutParams layoutParams = getLayoutParams();
+/*                ViewGroup.LayoutParams layoutParams = getLayoutParams();
                 if (null == layoutParams) {
                     layoutParams = new ViewGroup.LayoutParams(mTargetImageView.getWidth(), mTargetImageView.getHeight());
                 } else {
                     layoutParams.height = mTargetImageView.getHeight();
                     layoutParams.width = mTargetImageView.getWidth();
                 }
-                setLayoutParams(layoutParams);
+                setLayoutParams(layoutParams);*/
             }
         });
         return this;

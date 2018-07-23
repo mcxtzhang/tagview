@@ -3,13 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     tools:context="com.mcxtzhang.redbookeditphoto.MainActivity">
 
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="match_parent"
-        android:layout_height="230dp"
+        android:layout_height="wrap_content"
         android:scaleType="centerCrop"
         android:text="Hello World!"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -21,7 +21,7 @@
     <com.mcxtzhang.redbookeditphoto.widget.TagContainerView
         android:id="@+id/tagContainer"
         android:layout_width="match_parent"
-        android:layout_height="350dp"
+        android:layout_height="match_parent"
         android:padding="10dp">
 
     </com.mcxtzhang.redbookeditphoto.widget.TagContainerView>
