@@ -2,6 +2,7 @@ package com.mcxtzhang.redbookeditphoto.widget;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -40,9 +41,15 @@ public class TagContainerView extends FrameLayout {
     private int mode = MODE_VIEW;
 
     private Button mDelButton;
+    private boolean isDeled;
     private GestureDetectorCompat mTagParentGestureDetector;
     private List<TagView> mTagViewList = new LinkedList<>();
     private ImageView mTargetImageView;
+    private int mImageViewHeight;
+    private float mImageDrawableHeight;
+    private final Matrix mMatrix = new Matrix();
+    private final float[] mMatrixValues = new float[9];
+
 
     public TagContainerView(@NonNull Context context) {
         this(context, null);
@@ -58,10 +65,15 @@ public class TagContainerView extends FrameLayout {
     }
 
     public TagContainerView bindImageView(ImageView targetImageView) {
+        if (null == targetImageView) return this;
         mTargetImageView = targetImageView;
         post(new Runnable() {
             @Override
             public void run() {
+                mTargetImageView.setScaleType(ImageView.ScaleType.MATRIX);
+                mImageDrawableHeight = mTargetImageView.getDrawable().getBounds().height();
+                mImageViewHeight = mTargetImageView.getHeight();
+
                 ViewGroup.LayoutParams layoutParams = getLayoutParams();
                 if (null == layoutParams) {
                     layoutParams = new ViewGroup.LayoutParams(mTargetImageView.getWidth(), mTargetImageView.getHeight());
@@ -115,7 +127,41 @@ public class TagContainerView extends FrameLayout {
 
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                Log.d(TAG, "mTagParentGestureDetector onScroll() called with: e1 = [" + e1 + "], e2 = [" + e2 + "], distanceX = [" + distanceX + "], distanceY = [" + distanceY + "]");
+
+                //在当前基础上移动
+                mMatrix.set(mTargetImageView.getImageMatrix());
+                mMatrix.getValues(mMatrixValues);
+                distanceY = checkDyBound(mMatrixValues, -distanceY);
+                mMatrix.postTranslate(0, distanceY);
+                mTargetImageView.setImageMatrix(mMatrix);
+
+                //移动屏幕上的tag
+                moveAllTags(Math.round(distanceY));
                 return false;
+            }
+
+            /**
+             *  和当前矩阵对比，检验dy，使图像移动后不会超出ImageView边界
+             *  @param values
+             *  @param dy
+             *  @return
+             */
+            private float checkDyBound(float[] values, float dy) {
+                //Log.d(TAG, "checkDyBound() called with: values = [" + values + "], dy = [" + dy + "]");
+                //Log.d(TAG, "checkDyBound() called with: mImageHeight = [" + mImageHeight + "], height = [" + height + "]");
+                if (mImageDrawableHeight * values[Matrix.MSCALE_Y] < mImageViewHeight)
+                    return 0;
+                float translationY = values[Matrix.MTRANS_Y] + dy;
+                //上边缘
+                if (translationY > 0) {
+                    dy = -values[Matrix.MTRANS_Y];
+                }
+                //下边缘
+                else if (translationY < -(mImageDrawableHeight * values[Matrix.MSCALE_Y] - mImageViewHeight)) {
+                    dy = -(mImageDrawableHeight * values[Matrix.MSCALE_Y] - mImageViewHeight) - values[Matrix.MTRANS_Y];
+                }
+                return dy;
             }
 
             @Override
@@ -144,9 +190,24 @@ public class TagContainerView extends FrameLayout {
     }
 
     @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        switch (ev.getAction()) {
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                isDeled = false;
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    @Override
     public boolean onTouchEvent(MotionEvent event) {
         Log.d(TAG, "onTouchEvent() called with: event = [" + event + "]");
-        return mTagParentGestureDetector.onTouchEvent(event);
+        if (isDeled) {
+            return true;
+        } else {
+            return mTagParentGestureDetector.onTouchEvent(event);
+
+        }
     }
 
     private void addTag(Point point, boolean isRight) {
@@ -174,6 +235,26 @@ public class TagContainerView extends FrameLayout {
         }
         addView(tagView);
         mTagViewList.add(tagView);
+    }
+
+    private void moveTouchView(TagView v, int gapX, int gapY) {
+        v.updatePosition(gapX, gapY);
+
+
+        //v.layout(v.getLeft() + gapX, v.getTop() + gapY, v.getLeft() + gapX + v.getWidth(), v.getTop() + gapY + getHeight());
+//            FrameLayout.LayoutParams lp = (LayoutParams) v.getLayoutParams();
+//
+//            lp.leftMargin = lp.leftMargin + gapX;
+//            lp.topMargin = lp.topMargin + gapY;
+//
+//
+//            v.setLayoutParams(lp);
+    }
+
+    private void moveAllTags(int distanceY) {
+        for (TagView tagView : mTagViewList) {
+            tagView.updatePositionWithoutFix(0, distanceY);
+        }
     }
 
     public List<UploadPhotoTagData> saveTags() {
@@ -225,10 +306,12 @@ public class TagContainerView extends FrameLayout {
                     int offsetX = TagMatrixUtil.getMatrixX(matrixValues, originX);
                     int offsetY = TagMatrixUtil.getMatrixY(matrixValues, originY);
 
-                    boolean contains = visibleRect.contains(offsetX, offsetY);
+                    /*boolean contains = visibleRect.contains(offsetX, offsetY);
                     if (contains) {
                         addTag(new Point(offsetX, offsetY), tagPosition.isRight);
-                    }
+                    }*/
+                    addTag(new Point(offsetX, offsetY), tagPosition.isRight);
+
                 }
             }
         });
@@ -281,6 +364,7 @@ public class TagContainerView extends FrameLayout {
             mDelButton.getGlobalVisibleRect(rect);
             Log.d(TAG, "onScroll() called with: rect = [" + rect + "]");
             if (rect.contains((int) rawX, (int) rawY)) {
+                isDeled = true;
                 removeView(mView);
                 mTagViewList.remove(mView);
                 return false;

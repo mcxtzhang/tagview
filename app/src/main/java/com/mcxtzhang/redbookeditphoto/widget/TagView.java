@@ -223,6 +223,12 @@ public class TagView extends View {
         updateLocation();
     }
 
+    public void updatePositionWithoutFix(int distanceX, int distanceY) {
+        mLocation.x += distanceX;
+        mLocation.y += distanceY;
+        updateLocation();
+    }
+
     public TagView setText(String text) {
         if (TextUtils.isEmpty(text)) {
             return this;
