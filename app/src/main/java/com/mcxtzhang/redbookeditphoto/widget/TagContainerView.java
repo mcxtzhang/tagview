@@ -14,13 +14,11 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
-import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.mcxtzhang.redbookeditphoto.TagMatrixUtil;
 import com.mcxtzhang.redbookeditphoto.UploadPhotoTagData;
@@ -40,8 +38,8 @@ public class TagContainerView extends FrameLayout {
     public static final int MODE_VIEW = 1;
     private int mode = MODE_EDIT;
 
-    private Button mDelButton;
-    private boolean isDeled;
+    private TextView mDelButton;
+    //private boolean isDeled;
     private GestureDetectorCompat mTagParentGestureDetector;
     private List<TagView> mTagViewList = new LinkedList<>();
     private ImageView mTargetImageView;
@@ -87,11 +85,18 @@ public class TagContainerView extends FrameLayout {
         return this;
     }
 
+    public TagContainerView bindDelBtn(TextView delButton) {
+        if (null == delButton) return this;
+        mDelButton = delButton;
+        return this;
+    }
+
+
     private void init(Context context) {
         mContext = context;
         setClickable(true);
         setBackgroundColor(Color.parseColor("#88000000"));
-        createDelButton();
+        //createDelButton();
         mTagParentGestureDetector = new GestureDetectorCompat(mContext, new GestureDetector.OnGestureListener() {
             @Override
             public boolean onDown(MotionEvent e) {
@@ -177,37 +182,39 @@ public class TagContainerView extends FrameLayout {
 
 
     }
+//
+//    private void createDelButton() {
+//        if (mode == MODE_VIEW) {
+//            return;
+//        }
+//        mDelButton = new Button(mContext);
+//        mDelButton.setText("删除");
+//        FrameLayout.LayoutParams lp = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+//        lp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+//        addView(mDelButton, lp);
+//    }
 
-    private void createDelButton() {
-        if (mode == MODE_VIEW) {
-            return;
-        }
-        mDelButton = new Button(mContext);
-        mDelButton.setText("删除");
-        FrameLayout.LayoutParams lp = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        addView(mDelButton, lp);
-    }
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        switch (ev.getAction()) {
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_CANCEL:
-                isDeled = false;
-        }
-        return super.dispatchTouchEvent(ev);
-    }
+//    @Override
+//    public boolean dispatchTouchEvent(MotionEvent ev) {
+//        switch (ev.getAction()) {
+//            case MotionEvent.ACTION_UP:
+//            case MotionEvent.ACTION_CANCEL:
+//                isDeled = false;
+//        }
+//        return super.dispatchTouchEvent(ev);
+//    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         Log.d(TAG, "onTouchEvent() called with: event = [" + event + "]");
-        if (isDeled) {
-            return true;
-        } else {
-            return mTagParentGestureDetector.onTouchEvent(event);
+        return mTagParentGestureDetector.onTouchEvent(event);
 
-        }
+//        if (isDeled) {
+//            return true;
+//        } else {
+//            return mTagParentGestureDetector.onTouchEvent(event);
+//
+//        }
     }
 
     private void addTag(Point point, boolean isRight) {
@@ -228,6 +235,21 @@ public class TagContainerView extends FrameLayout {
                 @Override
                 public boolean onTouch(View v, MotionEvent ev) {
                     Log.i(TAG, "onTouch() called with: v = [" + v + "], ev = [" + ev + "]");
+                    switch (ev.getAction()) {
+                        case MotionEvent.ACTION_UP:
+                        case MotionEvent.ACTION_CANCEL:
+                            mDelButton.setText("添加标签");
+                            Rect rect = new Rect();
+                            mDelButton.getGlobalVisibleRect(rect);
+                            Log.d(TAG, "onScroll() called with: rect = [" + rect + "]");
+                            if (rect.contains((int) ev.getRawX(), (int) ev.getRawY())) {
+                                removeView(v);
+                                mTagViewList.remove(v);
+                                return true;
+                            }
+                            break;
+
+                    }
                     return gestureDetectorCompat.onTouchEvent(ev);
                 }
             });
@@ -360,14 +382,17 @@ public class TagContainerView extends FrameLayout {
             mLastPointF.y = rawY;
 
             //删除
+            mDelButton.setText("拖移到此处删除");
+
             Rect rect = new Rect();
             mDelButton.getGlobalVisibleRect(rect);
             Log.d(TAG, "onScroll() called with: rect = [" + rect + "]");
             if (rect.contains((int) rawX, (int) rawY)) {
-                isDeled = true;
-                removeView(mView);
-                mTagViewList.remove(mView);
-                return false;
+//                isDeled = true;
+//                removeView(mView);
+//                mTagViewList.remove(mView);
+//                return false;
+                mDelButton.setText("松手即可删除");
             }
             return true;
         }

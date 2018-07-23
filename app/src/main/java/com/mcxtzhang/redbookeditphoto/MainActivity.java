@@ -7,6 +7,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.TextView;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,6 +15,9 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "TAG";
+
+    private TextView mDelButton;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,10 +34,11 @@ public class MainActivity extends AppCompatActivity {
                 tagPhotoViewAdapter.saveTags(mViewPager.getCurrentItem());
             }
         });
+        mDelButton = findViewById(R.id.btnAddTag);
     }
 
-    private static class TagPhotoViewAdapter extends FragmentPagerAdapter {
-        private static Map<Integer, PhotoEditFragment> sIntegerPhotoEditFragmentMap = new HashMap<>();
+    private class TagPhotoViewAdapter extends FragmentPagerAdapter {
+        private Map<Integer, PhotoEditFragment> sIntegerPhotoEditFragmentMap = new HashMap<>();
 
         public TagPhotoViewAdapter(FragmentManager fm) {
             super(fm);
@@ -43,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
         public Fragment getItem(int position) {
             PhotoEditFragment photoEditFragment = PhotoEditFragment.newInstance(position);
             sIntegerPhotoEditFragmentMap.put(position, photoEditFragment);
+            photoEditFragment.setDelButton(mDelButton);
             return photoEditFragment;
         }
 

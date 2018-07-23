@@ -12,6 +12,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.mcxtzhang.redbookeditphoto.widget.TagContainerView;
 
@@ -43,6 +44,8 @@ public class PhotoEditFragment extends Fragment {
         photoEditFragment.setArguments(arguments);
         return photoEditFragment;
     }
+
+    private TextView mDelButton;
 
     TagContainerView mTagContainerView;
     ImageView mImageView;
@@ -141,7 +144,8 @@ public class PhotoEditFragment extends Fragment {
 
 
         mTagContainerView = rootView.findViewById(R.id.tagContainer);
-        mTagContainerView.bindImageView(mImageView);
+        mTagContainerView.bindImageView(mImageView)
+                .bindDelBtn(mDelButton);
 
         List<UploadPhotoTagData> points = sIntegerListMap.get(mPosition);
         if (points == null && mPosition == 0) {
@@ -157,5 +161,8 @@ public class PhotoEditFragment extends Fragment {
         sIntegerListMap.put(mPosition, mTagContainerView.saveTags());
     }
 
-
+    public PhotoEditFragment setDelButton(TextView delButton) {
+        mDelButton = delButton;
+        return this;
+    }
 }
