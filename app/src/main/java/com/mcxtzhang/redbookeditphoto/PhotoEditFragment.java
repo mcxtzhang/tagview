@@ -74,6 +74,22 @@ public class PhotoEditFragment extends Fragment {
         } else {
             mImageView.setImageResource(R.drawable.horizontal);
         }
+        if (mPosition == 0) {
+            mImageView.setImageResource(R.drawable.vertical);
+        }
+        if (mPosition == 1) {
+            mImageView.setImageResource(R.drawable.horizontal);
+        }
+        if (mPosition == 2) {
+            mImageView.setImageResource(R.drawable.little);
+        }
+        if (mPosition == 3) {
+            mImageView.setImageResource(R.drawable.tall);
+        }
+        if (mPosition == 4) {
+            mImageView.setImageResource(R.drawable.normal);
+        }
+
         mImageView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
