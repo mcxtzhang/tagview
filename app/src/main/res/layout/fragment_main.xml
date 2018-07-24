@@ -6,11 +6,12 @@
     android:layout_height="match_parent"
     tools:context="com.mcxtzhang.redbookeditphoto.MainActivity">
 
+    <!--！！！！！ImageView 的高度动态设定，取决于缩放后的图片高度 -->
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scaleType="centerCrop"
+        android:layout_height="match_parent"
+        android:scaleType="matrix"
         android:text="Hello World!"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"

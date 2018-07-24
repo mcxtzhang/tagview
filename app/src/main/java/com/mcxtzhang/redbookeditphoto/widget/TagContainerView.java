@@ -16,6 +16,8 @@ import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -44,7 +46,9 @@ public class TagContainerView extends FrameLayout {
     private List<TagView> mTagViewList = new LinkedList<>();
     private ImageView mTargetImageView;
     private int mImageViewHeight;
+    private int mImageViewWidth;
     private float mImageDrawableHeight;
+    private float mImageDrawableWidth;
     private final Matrix mMatrix = new Matrix();
     private final float[] mMatrixValues = new float[9];
 
@@ -68,18 +72,39 @@ public class TagContainerView extends FrameLayout {
         post(new Runnable() {
             @Override
             public void run() {
-                mTargetImageView.setScaleType(ImageView.ScaleType.MATRIX);
                 mImageDrawableHeight = mTargetImageView.getDrawable().getBounds().height();
-                mImageViewHeight = mTargetImageView.getHeight();
+                mImageDrawableWidth = mTargetImageView.getDrawable().getBounds().width();
+                //mImageViewHeight = mTargetImageView.getHeight();
+                mImageViewWidth = mTargetImageView.getWidth();
 
-/*                ViewGroup.LayoutParams layoutParams = getLayoutParams();
-                if (null == layoutParams) {
-                    layoutParams = new ViewGroup.LayoutParams(mTargetImageView.getWidth(), mTargetImageView.getHeight());
-                } else {
-                    layoutParams.height = mTargetImageView.getHeight();
-                    layoutParams.width = mTargetImageView.getWidth();
+                float rate = mImageViewWidth * 1.0f / mImageDrawableWidth;
+
+                //scale image
+                Matrix imageMatrix = mTargetImageView.getImageMatrix();
+                imageMatrix.postScale(rate, rate);
+                mTargetImageView.setImageMatrix(imageMatrix);
+
+                //resize ImageView height
+                mImageViewHeight = (int) (mImageDrawableHeight * rate);
+
+                //bounds fix
+                ViewParent parent = mTargetImageView.getParent();
+                if (parent instanceof ViewGroup) {
+                    ViewGroup viewGroup = (ViewGroup) parent;
+                    int viewGroupHeight = viewGroup.getHeight();
+                    if (mImageViewHeight > viewGroupHeight) {
+                        mImageViewHeight = viewGroupHeight;
+                    }
                 }
-                setLayoutParams(layoutParams);*/
+
+                ViewGroup.LayoutParams layoutParams = mTargetImageView.getLayoutParams();
+                if (null == layoutParams) {
+                    layoutParams = new ViewGroup.LayoutParams(mImageViewWidth, mImageViewHeight);
+                } else {
+                    layoutParams.width = mImageViewWidth;
+                    layoutParams.height = mImageViewHeight;
+                }
+                mTargetImageView.setLayoutParams(layoutParams);
             }
         });
         return this;
@@ -305,7 +330,7 @@ public class TagContainerView extends FrameLayout {
 
     public void loadTags(final List<UploadPhotoTagData> tagPositions) {
         if (null == tagPositions) return;
-        mTargetImageView.post(new Runnable() {
+        post(new Runnable() {
             @Override
             public void run() {
                 Rect bounds = mTargetImageView.getDrawable().getBounds();
