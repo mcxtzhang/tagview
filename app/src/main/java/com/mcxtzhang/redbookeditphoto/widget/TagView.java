@@ -267,41 +267,71 @@ public class TagView extends View {
     protected void onDraw(Canvas canvas) {
         Log.d(TAG, "onDraw() called with: canvas = [" + canvas + "]");
         int verticalMiddle = mHeight / 2;
+        //因为存在边缘限制，会挤压View的宽度，所以先确定不会挤压的部分，再利用宽度-这些部分 = 剩余文字区域的宽度
+
+        //先画线，再画黑圆环盖在线上，最后用白色小圆点盖在黑色圆环上
         if (isRight) {
 
         } else {
-
+            mLineStartX = mWidth - mRingRadius - mPointRadius - mLineWidth;
+            mCircleCentreX = mWidth - mRingRadius;
         }
-
-        //先画线，再画黑圆环盖在线上，最后用白色小圆点盖在黑色圆环上
         canvas.drawLine(mLineStartX, verticalMiddle, mLineStartX + mLineWidth, verticalMiddle, mLinePaint);
         canvas.drawCircle(mCircleCentreX, verticalMiddle, mRingRadius, mRingPaint);
         canvas.drawCircle(mCircleCentreX, verticalMiddle, mPointRadius, mPointPaint);
 
-        //文字背景
-        mBorderRect.set(mTextBorderStartX, 0, mWidth, mHeight);
-        canvas.drawRoundRect(mBorderRect, mRadiusTextBorder, mRadiusTextBorder, mTextBorderPaint);
-        mBorderRect.set(mTextBgStartX, mStrokeWidth, mWidth - mStrokeWidth, mHeight - mStrokeWidth);
-        canvas.drawRoundRect(mBorderRect, mRadiusTextBorder, mRadiusTextBorder, mTextBgPaint);
+        if (isRight) {
+            //文字背景
+            mBorderRect.set(mTextBorderStartX, 0, mWidth, mHeight);
+            canvas.drawRoundRect(mBorderRect, mRadiusTextBorder, mRadiusTextBorder, mTextBorderPaint);
+            mBorderRect.set(mTextBgStartX, mStrokeWidth, mWidth - mStrokeWidth, mHeight - mStrokeWidth);
+            canvas.drawRoundRect(mBorderRect, mRadiusTextBorder, mRadiusTextBorder, mTextBgPaint);
 
-        int baseX = 0;
-        //小icon
-        if (isShowIcon) {
-            mIconDrawStartX = mTextBorderStartX + (mWidth - mTextBorderStartX - mTextBounds.width() - mIconWidth - mIconPaddingRight) / 2;
-            baseX = mIconDrawStartX + mIconWidth + mIconPaddingRight;
-            mBorderRect.set(mIconDrawStartX, mStrokeWidth + getPaddingTop(), mIconDrawStartX + mIconWidth, mStrokeWidth + getPaddingTop() + mIconWidth);
-            canvas.drawBitmap(mIconBitmap,
-                    null,
-                    mBorderRect,
-                    mTextPaint);
+            int baseX = 0;
+            //小icon
+            if (isShowIcon) {
+                mIconDrawStartX = mTextBorderStartX + ((mWidth - mTextBorderStartX - mTextBounds.width() - mIconWidth - mIconPaddingRight) >> 1);
+                baseX = mIconDrawStartX + mIconWidth + mIconPaddingRight;
+                mBorderRect.set(mIconDrawStartX, mStrokeWidth + getPaddingTop(), mIconDrawStartX + mIconWidth, mStrokeWidth + getPaddingTop() + mIconWidth);
+                canvas.drawBitmap(mIconBitmap,
+                        null,
+                        mBorderRect,
+                        mTextPaint);
+            } else {
+                baseX = mTextBorderStartX + ((mWidth - mTextBorderStartX - mTextBounds.width()) >> 1);
+            }
+            // 计算Baseline绘制的Y坐标
+            int baseY = (verticalMiddle - ((int) (mTextPaint.descent() + mTextPaint.ascent()) >> 1));
+
+            canvas.drawText(mShowText, 0, mShowText.length(), baseX, baseY, mTextPaint);
         } else {
-            baseX = mTextBorderStartX + (mWidth - mTextBorderStartX - mTextBounds.width()) / 2;
+            //文字背景
+            mBorderRect.set(0, 0, mLineStartX, mHeight);
+            canvas.drawRoundRect(mBorderRect, mRadiusTextBorder, mRadiusTextBorder, mTextBorderPaint);
+            mBorderRect.set(mStrokeWidth, mStrokeWidth, mLineStartX - mStrokeWidth, mHeight - mStrokeWidth);
+            canvas.drawRoundRect(mBorderRect, mRadiusTextBorder, mRadiusTextBorder, mTextBgPaint);
+
+            int baseX = 0;
+            //小icon
+            if (isShowIcon) {
+                mIconDrawStartX = (mLineStartX - mTextBounds.width() - mIconWidth - mIconPaddingRight) >> 1;
+                baseX = mIconDrawStartX + mIconWidth + mIconPaddingRight;
+
+                mBorderRect.set(mIconDrawStartX, mStrokeWidth + getPaddingTop(), mIconDrawStartX + mIconWidth, mStrokeWidth + getPaddingTop() + mIconWidth);
+                canvas.drawBitmap(mIconBitmap,
+                        null,
+                        mBorderRect,
+                        mTextPaint);
+            } else {
+                baseX = ((mLineStartX - mTextBounds.width()) >> 1);
+            }
+            // 计算Baseline绘制的Y坐标
+            int baseY = (verticalMiddle - ((int) (mTextPaint.descent() + mTextPaint.ascent()) >> 1));
+
+            canvas.drawText(mShowText, 0, mShowText.length(), baseX, baseY, mTextPaint);
+
+
         }
-        // 计算Baseline绘制的Y坐标
-        int baseY = (int) (verticalMiddle - ((mTextPaint.descent() + mTextPaint.ascent()) / 2));
-
-        canvas.drawText(mShowText, 0, mShowText.length(), baseX, baseY, mTextPaint);
-
     }
 
     @Override
