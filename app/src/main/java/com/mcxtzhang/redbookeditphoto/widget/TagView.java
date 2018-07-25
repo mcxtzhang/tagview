@@ -1,11 +1,13 @@
 package com.mcxtzhang.redbookeditphoto.widget;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -19,6 +21,7 @@ import android.view.ViewParent;
 import android.widget.FrameLayout;
 
 /**
+ * 原本想用TextView draw出来，但是考虑各种边界判断，这里要用完全的自定义View去draw
  * Created by zhangxutong on 2018/6/21.
  */
 
@@ -46,6 +49,7 @@ public class TagView extends View {
     //宽高
     private int mWidth, mHeight;
 
+    private int mTextStartX; //计算得出。小圆点呼吸半径（左边）+小圆点+横线的宽度
     private Paint mTextPaint;
     private final Rect mTextBounds = new Rect();
     private final Rect mEllipsisBounds = new Rect();
@@ -54,6 +58,36 @@ public class TagView extends View {
     private int mMinWidth;
 
     private ViewGroup mParent;
+
+    //圆点和圆环
+    private int mCircleCentreX;
+    private Paint mPointPaint;
+    private int mPointRadius;
+    private Paint mRingPaint;
+    private int mRingRadius;
+
+    //横线
+    private Paint mLinePaint;
+    private int mLineStartX;
+    private int mLineWidth;
+    private int mLineHeight;
+
+    //文字区域的边框
+    private Paint mTextBorderPaint;
+    private RectF mBorderRect;
+    private int mRadiusTextBorder;
+    private int mTextBorderStartX;
+    private int mStrokeWidth;
+    //文字区域的背景
+    private Paint mTextBgPaint;
+    private int mTextBgStartX;
+
+    //小icon
+    private boolean isShowIcon;
+    private int mIconWidth;
+    private int mIconPaddingRight;
+    private Bitmap mIconBitmap;
+    private int mIconDrawStartX;
 
 
     public TagView(Context context) {
@@ -71,12 +105,51 @@ public class TagView extends View {
 
     private void init(Context context) {
         mContext = context;
-        mTextPaint = new Paint();
-        //传入像素
         DisplayMetrics metrics = mContext.getApplicationContext().getResources().getDisplayMetrics();
-        mTextPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 14, metrics));
-        mTextPaint.setColor(Color.WHITE);
+
+
+        mCircleCentreX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, metrics);
+        mRingRadius = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, metrics);
+        mRingPaint = new Paint();
+        mRingPaint.setAntiAlias(true);
+        mRingPaint.setColor(Color.parseColor("#b2000000"));
+
+        mPointRadius = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 3, metrics);
+        mPointPaint = new Paint();
+        mPointPaint.setAntiAlias(true);
+        mPointPaint.setColor(Color.WHITE);
+
+        mStrokeWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, metrics);
+        mLinePaint = new Paint();
+        mLinePaint.setAntiAlias(true);
+        mLinePaint.setColor(Color.parseColor("#88ffffff"));
+        mLinePaint.setStrokeWidth(mStrokeWidth);
+        mLineWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 14, metrics);
+        mLineHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0.5f, metrics);
+        mLineStartX = mRingRadius + mPointRadius;
+
+        mBorderRect = new RectF();
+        mTextBorderPaint = mLinePaint;
+        mTextBorderPaint.setStyle(Paint.Style.STROKE);
+        mRadiusTextBorder = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 31, metrics);
+        mTextBorderStartX = mLineStartX + mLineWidth;
+
+        mTextBgPaint = new Paint();
+        mTextBgPaint.setAntiAlias(true);
+        mTextBgPaint.setColor(Color.parseColor("#bf000000"));
+        mTextBgStartX = mTextBorderStartX + mStrokeWidth;
+
+        mIconWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 13, metrics);
+        mIconPaddingRight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2, metrics);
+
+
+        mTextPaint = mPointPaint;
+        //传入像素
+        mTextPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 13, metrics));
+        // TODO: 2018/7/24 maybe useless
         mTextPaint.getTextBounds(ELLIPSIS_HINT, 0, ELLIPSIS_HINT.length(), mEllipsisBounds);
+
+
     }
 
     @Override
@@ -99,7 +172,11 @@ public class TagView extends View {
             case MeasureSpec.EXACTLY:
                 break;
             default:
-                int computeSize = (getPaddingLeft() + getPaddingRight() + mTextBounds.width());
+                int textWidth = getPaddingLeft() + getPaddingRight() + mTextBounds.width();
+                if (isShowIcon) {
+                    textWidth += (mIconWidth + mIconPaddingRight);
+                }
+                int computeSize = mRingRadius + mLineWidth + mStrokeWidth + textWidth + mStrokeWidth;
 
                 //边界计算
                 ViewParent parent = getParent();
@@ -121,7 +198,11 @@ public class TagView extends View {
                             textShowCount--;
                             mShowText = mText.substring(0, textShowCount) + ELLIPSIS_HINT;
                             mTextPaint.getTextBounds(mShowText, 0, mShowText.length(), mTextBounds);//测量计算文字所在矩形，可以得到宽高
-                            computeSize = (getPaddingLeft() + getPaddingRight() + mTextBounds.width());
+                            textWidth = getPaddingLeft() + getPaddingRight() + mTextBounds.width();
+                            if (isShowIcon) {
+                                textWidth += (mIconWidth + mIconPaddingRight);
+                            }
+                            computeSize = mRingRadius + mLineWidth + mStrokeWidth + textWidth + mStrokeWidth;
                         }
 
                     } else {
@@ -136,7 +217,11 @@ public class TagView extends View {
                             textShowCount--;
                             mShowText = mText.substring(0, textShowCount) + ELLIPSIS_HINT;
                             mTextPaint.getTextBounds(mShowText, 0, mShowText.length(), mTextBounds);//测量计算文字所在矩形，可以得到宽高
-                            computeSize = (getPaddingLeft() + getPaddingRight() + mTextBounds.width());
+                            textWidth = getPaddingLeft() + getPaddingRight() + mTextBounds.width();
+                            if (isShowIcon) {
+                                textWidth += (mIconWidth + mIconPaddingRight);
+                            }
+                            computeSize = mRingRadius + mLineWidth + mStrokeWidth + textWidth + mStrokeWidth;
                         }
                     }
                     //如果resize过，说明接近边缘
@@ -154,11 +239,11 @@ public class TagView extends View {
             case MeasureSpec.EXACTLY:
                 break;
             case MeasureSpec.AT_MOST:
-                int computeSize = (getPaddingTop() + getPaddingBottom() + mTextBounds.height());
+                int computeSize = (getPaddingTop() + getPaddingBottom() + mIconWidth + mStrokeWidth + mStrokeWidth);
                 hSize = computeSize < hSize ? computeSize : hSize;
                 break;
             case MeasureSpec.UNSPECIFIED:
-                computeSize = (getPaddingTop() + getPaddingBottom() + mTextBounds.height());
+                computeSize = (getPaddingTop() + getPaddingBottom() + mIconWidth + mStrokeWidth + mStrokeWidth);
                 hSize = computeSize;
                 break;
         }
@@ -181,11 +266,39 @@ public class TagView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         Log.d(TAG, "onDraw() called with: canvas = [" + canvas + "]");
-        canvas.drawColor(Color.GREEN);
-        // 计算Baseline绘制的起点X轴坐标
-        int baseX = getPaddingLeft();
+        int verticalMiddle = mHeight / 2;
+        if (isRight) {
+
+        } else {
+
+        }
+
+        //先画线，再画黑圆环盖在线上，最后用白色小圆点盖在黑色圆环上
+        canvas.drawLine(mLineStartX, verticalMiddle, mLineStartX + mLineWidth, verticalMiddle, mLinePaint);
+        canvas.drawCircle(mCircleCentreX, verticalMiddle, mRingRadius, mRingPaint);
+        canvas.drawCircle(mCircleCentreX, verticalMiddle, mPointRadius, mPointPaint);
+
+        //文字背景
+        mBorderRect.set(mTextBorderStartX, 0, mWidth, mHeight);
+        canvas.drawRoundRect(mBorderRect, mRadiusTextBorder, mRadiusTextBorder, mTextBorderPaint);
+        mBorderRect.set(mTextBgStartX, mStrokeWidth, mWidth - mStrokeWidth, mHeight - mStrokeWidth);
+        canvas.drawRoundRect(mBorderRect, mRadiusTextBorder, mRadiusTextBorder, mTextBgPaint);
+
+        int baseX = 0;
+        //小icon
+        if (isShowIcon) {
+            mIconDrawStartX = mTextBorderStartX + (mWidth - mTextBorderStartX - mTextBounds.width() - mIconWidth - mIconPaddingRight) / 2;
+            baseX = mIconDrawStartX + mIconWidth + mIconPaddingRight;
+            mBorderRect.set(mIconDrawStartX, mStrokeWidth + getPaddingTop(), mIconDrawStartX + mIconWidth, mStrokeWidth + getPaddingTop() + mIconWidth);
+            canvas.drawBitmap(mIconBitmap,
+                    null,
+                    mBorderRect,
+                    mTextPaint);
+        } else {
+            baseX = mTextBorderStartX + (mWidth - mTextBorderStartX - mTextBounds.width()) / 2;
+        }
         // 计算Baseline绘制的Y坐标
-        int baseY = (int) ((mHeight / 2) - ((mTextPaint.descent() + mTextPaint.ascent()) / 2));
+        int baseY = (int) (verticalMiddle - ((mTextPaint.descent() + mTextPaint.ascent()) / 2));
 
         canvas.drawText(mShowText, 0, mShowText.length(), baseX, baseY, mTextPaint);
 
@@ -196,6 +309,18 @@ public class TagView extends View {
         super.onSizeChanged(w, h, oldw, oldh);
         mWidth = w;
         mHeight = h;
+    }
+
+    public TagView setShowIcon(boolean showIcon) {
+        isShowIcon = showIcon;
+        //updateAttr();
+        return this;
+    }
+
+    public TagView setIconBitmap(Bitmap iconBitmap) {
+        mIconBitmap = iconBitmap;
+        invalidate();
+        return this;
     }
 
     public void setOrientationAndPosition(boolean isRight, Point point) {
@@ -260,6 +385,15 @@ public class TagView extends View {
     public int getMinWidth() {
         return mMinWidth;
     }
+
+/*    private void updateAttr() {
+        if (isShowIcon) {
+            mIconDrawStartX = mTextBgStartX + getPaddingLeft();
+            mTextStartX = mIconDrawStartX + mIconWidth + mIconPaddingRight;
+        } else {
+            mTextStartX = mTextBgStartX + getPaddingLeft();
+        }
+    }*/
 
     private void computeMinWidth() {
         int paddingLeft = getPaddingLeft();
@@ -337,12 +471,12 @@ public class TagView extends View {
         }
         if (isRight) {
             lp.gravity = Gravity.LEFT;
-            lp.leftMargin = mLocation.x;
+            lp.leftMargin = mLocation.x - mParent.getPaddingLeft();
         } else {
             lp.gravity = Gravity.RIGHT;
-            lp.rightMargin = mParent.getWidth() - mParent.getPaddingRight() - mParent.getPaddingLeft() - mLocation.x;
+            lp.rightMargin = mParent.getWidth() - mParent.getPaddingRight() - mLocation.x;
         }
-        lp.topMargin = mLocation.y - height / 2;
+        lp.topMargin = mLocation.y - height / 2 - mParent.getPaddingTop();
 
         setLayoutParams(lp);
     }

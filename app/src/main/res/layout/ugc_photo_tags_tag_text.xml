@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/normal">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:background="@drawable/ugc_photo_tags_tag_bg"
+        android:drawableLeft="@drawable/ugc_photo_tags_tag_category_default"
+        android:drawablePadding="2dp"
+        android:paddingBottom="3dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="3dp"
+        android:textColor="#ffffff"
+        android:textSize="13sp"
+        tools:text="品牌啊品牌">
+
+    </TextView>
+</FrameLayout>

@@ -1,6 +1,7 @@
 package com.mcxtzhang.redbookeditphoto.widget;
 
 import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Point;
@@ -22,6 +23,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.mcxtzhang.redbookeditphoto.R;
 import com.mcxtzhang.redbookeditphoto.TagMatrixUtil;
 import com.mcxtzhang.redbookeditphoto.UploadPhotoTagData;
 
@@ -245,12 +247,15 @@ public class TagContainerView extends FrameLayout {
     private void addTag(Point point, boolean isRight) {
         TagView tagView = new TagView(mContext);
         DisplayMetrics metrics = mContext.getApplicationContext().getResources().getDisplayMetrics();
-        int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, metrics);
-        tagView.setPadding(padding, padding, padding, padding);
+        int paddingHorizontal = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, metrics);
+        int paddingVertical = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 3, metrics);
+        tagView.setPadding(paddingHorizontal, paddingVertical, paddingHorizontal, paddingVertical);
         tagView.setParent(this);
-        tagView.setText("Gucci Gucci");
+        tagView.setText(Math.random() > 0.5 ? "Gucci Gucci" : "话题啊话题");
         tagView.setBackgroundColor(Color.BLUE);
         tagView.setClickable(true);
+        tagView.setShowIcon(Math.random() > 0.5 ? true : false)
+                .setIconBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.little));
         tagView.setOrientationAndPosition(isRight, point);
 
         if (mode == MODE_EDIT) {
