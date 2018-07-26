@@ -341,6 +341,7 @@ public class TagView extends View {
 
     public TagView setIconBitmap(Bitmap iconBitmap) {
         mIconBitmap = iconBitmap;
+        computeMinWidth();
         invalidate();
         return this;
     }
@@ -424,7 +425,11 @@ public class TagView extends View {
 
         int minShowLength = textLength > MIN_TEXT_SHOW_COUNT ? MIN_TEXT_SHOW_COUNT : textLength;
         mTextPaint.getTextBounds(mText.substring(0, minShowLength) + ELLIPSIS_HINT, 0, minShowLength + ELLIPSIS_HINT.length(), mTextBounds);//测量计算文字所在矩形，可以得到宽高
-        mMinWidth = paddingLeft + paddingRight + mTextBounds.width();
+        mMinWidth = paddingLeft + paddingRight + mTextBounds.width() + mStrokeWidth + mStrokeWidth;
+        mMinWidth += mRingRadius + mPointRadius + mLineWidth;
+        if (isShowIcon) {
+            mMinWidth += mIconWidth + mIconPaddingRight;
+        }
 
 //        if (textLength > MAX_TEXT_SHOW_COUNT) {
 //            mTextPaint.getTextBounds(mText.substring(0, MAX_TEXT_SHOW_COUNT) + ELLIPSIS_HINT, 0, MAX_TEXT_SHOW_COUNT + ELLIPSIS_HINT.length(), mTextBounds);//测量计算文字所在矩形，可以得到宽高
@@ -457,24 +462,24 @@ public class TagView extends View {
 
         if (isRight) {
             //right
-            int parentRightSpace = parentWidth - parentPaddingRight - parentPaddingLeft;
+            int parentRightSpace = parentWidth - parentPaddingRight;
             parentRightSpace = parentRightSpace - mMinWidth - mLocation.x;
             if (parentRightSpace < 0) {
                 mLocation.x += parentRightSpace;
             }
             //left
-            if (mLocation.x < 0) {
-                mLocation.x = 0;
+            if (mLocation.x < parentPaddingLeft) {
+                mLocation.x = parentPaddingLeft;
             }
 
         } else {
             //left
-            int parentLeftSpace = mLocation.x - mMinWidth;
+            int parentLeftSpace = mLocation.x - mMinWidth - parentPaddingLeft;
             if (parentLeftSpace < 0) {
                 mLocation.x -= parentLeftSpace;
             }
             //right
-            int parentRightSpace = parentWidth - parentPaddingRight - parentPaddingLeft - mLocation.x;
+            int parentRightSpace = parentWidth - parentPaddingRight - mLocation.x;
             if (parentRightSpace < 0) {
                 mLocation.x += parentRightSpace;
             }

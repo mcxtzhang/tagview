@@ -23,7 +23,8 @@
         android:id="@+id/tagContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="10dp">
+        android:paddingLeft="13dp"
+        android:paddingRight="13dp">
 
     </com.mcxtzhang.redbookeditphoto.widget.TagContainerView>
 
