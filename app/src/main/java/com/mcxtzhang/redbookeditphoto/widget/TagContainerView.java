@@ -41,13 +41,15 @@ public class TagContainerView extends FrameLayout {
     public static final int MODE_EDIT = 0;
     public static final int MODE_VIEW = 1;
     private int mode = MODE_EDIT;
-    private final Rect mRect = new Rect();
 
     private TextView mDelButton;
+    private final Rect mDelButtonRect = new Rect();
     //private boolean isDeled;
     private GestureDetectorCompat mTagParentGestureDetector;
     private List<TagView> mTagViewList = new LinkedList<>();
     private ImageView mTargetImageView;
+    private final Rect mImageRect = new Rect();
+
     private int mImageViewHeight;
     private int mImageViewWidth;
     private float mImageDrawableHeight;
@@ -114,6 +116,13 @@ public class TagContainerView extends FrameLayout {
                 }
                 layoutParams.topMargin = topMargin;
                 mTargetImageView.setLayoutParams(layoutParams);
+                post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mImageRect.set(mTargetImageView.getLeft(), mTargetImageView.getTop(), mTargetImageView.getRight(), mTargetImageView.getBottom());
+                        mDelButton.getGlobalVisibleRect(mDelButtonRect);
+                    }
+                });
             }
         });
         return this;
@@ -148,8 +157,7 @@ public class TagContainerView extends FrameLayout {
                     int x = (int) e.getX();
                     int y = (int) e.getY();
 
-                    mRect.set(mTargetImageView.getLeft(), mTargetImageView.getTop(), mTargetImageView.getRight(), mTargetImageView.getBottom());
-                    if (mRect.contains(x, y)) {
+                    if (mImageRect.contains(x, y)) {
                         boolean isRight = false;
                         int containerWidth = getWidth();
                         if (containerWidth / 2 > x) {
@@ -277,21 +285,26 @@ public class TagContainerView extends FrameLayout {
             final GestureDetectorCompat gestureDetectorCompat = new GestureDetectorCompat(mContext, new TagGestureListener(tagView));
             gestureDetectorCompat.setIsLongpressEnabled(false);
             tagView.setOnTouchListener(new OnTouchListener() {
+                private Point mDownLocation;
+
                 @Override
                 public boolean onTouch(View v, MotionEvent ev) {
                     Log.i(TAG, "onTouch() called with: v = [" + v + "], ev = [" + ev + "]");
                     switch (ev.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            mDownLocation = new Point(((TagView) v).getLocation());
+                            break;
                         case MotionEvent.ACTION_UP:
                         case MotionEvent.ACTION_CANCEL:
                             mDelButton.setText("添加标签");
-                            Rect rect = new Rect();
-                            mDelButton.getGlobalVisibleRect(rect);
-                            Log.d(TAG, "onScroll() called with: rect = [" + rect + "]");
-                            if (rect.contains((int) ev.getRawX(), (int) ev.getRawY())) {
+                            if (mDelButtonRect.contains((int) ev.getRawX(), (int) ev.getRawY())) {
                                 removeView(v);
                                 mTagViewList.remove(v);
                                 return true;
+                            } else if (!mImageRect.contains((int) ev.getX(), (int) ev.getY())) {
+                                ((TagView) v).setLocation(mDownLocation);
                             }
+                            mDownLocation = null;
                             break;
 
                     }
@@ -429,10 +442,7 @@ public class TagContainerView extends FrameLayout {
             //删除
             mDelButton.setText("拖移到此处删除");
 
-            Rect rect = new Rect();
-            mDelButton.getGlobalVisibleRect(rect);
-            Log.d(TAG, "onScroll() called with: rect = [" + rect + "]");
-            if (rect.contains((int) rawX, (int) rawY)) {
+            if (mDelButtonRect.contains((int) rawX, (int) rawY)) {
 //                isDeled = true;
 //                removeView(mView);
 //                mTagViewList.remove(mView);

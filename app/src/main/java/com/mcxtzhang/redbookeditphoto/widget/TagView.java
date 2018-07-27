@@ -346,6 +346,12 @@ public class TagView extends View {
         return this;
     }
 
+    public TagView setLocation(Point location) {
+        mLocation = location;
+        updateLocation();
+        return this;
+    }
+
     public void setOrientationAndPosition(boolean isRight, Point point) {
         this.isRight = isRight;
         this.mLocation = point;
