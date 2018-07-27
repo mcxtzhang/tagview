@@ -1,47 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!--  不嵌套一层的话，ViewPager的内容无法覆盖在这个Button之上  -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom">
+
+        <Button
+            android:id="@+id/btnAddTag"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFFFFF"
+            android:text="添加标签"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="1" />
+    </FrameLayout>
+
     <android.support.v4.view.ViewPager
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@id/btnAddTag"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_height="match_parent">
 
     </android.support.v4.view.ViewPager>
-
-    <Button
-        android:id="@+id/btnAddTag"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:background="#FFFFFF"
-        android:text="添加标签"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1" />
 
     <Button
         android:id="@+id/btnSave"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="10dp"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="70dp"
         android:background="@android:color/transparent"
         android:text="添加标签可以获得更多赞"
         android:textColor="#CCCCCC"
         android:textSize="12sp"
         app:layout_constraintBottom_toTopOf="@id/btnAddTag" />
 
-
-    <!--    <Button
-            android:id="@+id/btnSave"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:text="保存" />-->
-
-</android.support.constraint.ConstraintLayout>
+</FrameLayout>

@@ -144,8 +144,8 @@ public class PhotoEditFragment extends Fragment {
 
 
         mTagContainerView = rootView.findViewById(R.id.tagContainer);
-        mTagContainerView.bindImageView(mImageView)
-                .bindDelBtn(mDelButton);
+        mTagContainerView.bindDelBtn(mDelButton)
+                .bindImageView(mImageView);
 
         List<UploadPhotoTagData> points = sIntegerListMap.get(mPosition);
         if (points == null /*&& mPosition == 0*/) {

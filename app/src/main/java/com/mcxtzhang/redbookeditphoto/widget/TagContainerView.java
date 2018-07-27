@@ -91,21 +91,27 @@ public class TagContainerView extends FrameLayout {
 
                 //bounds fix
                 ViewParent parent = mTargetImageView.getParent();
+                int topMargin = 0;
                 if (parent instanceof ViewGroup) {
                     ViewGroup viewGroup = (ViewGroup) parent;
                     int viewGroupHeight = viewGroup.getHeight();
+                    int delButtonHeight = mDelButton.getHeight();
+                    viewGroupHeight -= delButtonHeight;
                     if (mImageViewHeight > viewGroupHeight) {
                         mImageViewHeight = viewGroupHeight;
+                    } else {
+                        topMargin = (viewGroupHeight - mImageViewHeight) / 2;
                     }
                 }
 
-                ViewGroup.LayoutParams layoutParams = mTargetImageView.getLayoutParams();
+                FrameLayout.LayoutParams layoutParams = (LayoutParams) mTargetImageView.getLayoutParams();
                 if (null == layoutParams) {
-                    layoutParams = new ViewGroup.LayoutParams(mImageViewWidth, mImageViewHeight);
+                    layoutParams = new FrameLayout.LayoutParams(mImageViewWidth, mImageViewHeight);
                 } else {
                     layoutParams.width = mImageViewWidth;
                     layoutParams.height = mImageViewHeight;
                 }
+                layoutParams.topMargin = topMargin;
                 mTargetImageView.setLayoutParams(layoutParams);
             }
         });
