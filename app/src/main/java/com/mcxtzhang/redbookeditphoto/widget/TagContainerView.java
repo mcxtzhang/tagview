@@ -41,6 +41,7 @@ public class TagContainerView extends FrameLayout {
     public static final int MODE_EDIT = 0;
     public static final int MODE_VIEW = 1;
     private int mode = MODE_EDIT;
+    private final Rect mRect = new Rect();
 
     private TextView mDelButton;
     //private boolean isDeled;
@@ -146,12 +147,20 @@ public class TagContainerView extends FrameLayout {
                 if (mode == MODE_EDIT) {
                     int x = (int) e.getX();
                     int y = (int) e.getY();
-                    boolean isRight = false;
-                    int containerWidth = getWidth();
-                    if (containerWidth / 2 > x) {
-                        isRight = true;
+
+                    mRect.set(mTargetImageView.getLeft(), mTargetImageView.getTop(), mTargetImageView.getRight(), mTargetImageView.getBottom());
+                    if (mRect.contains(x, y)) {
+                        boolean isRight = false;
+                        int containerWidth = getWidth();
+                        if (containerWidth / 2 > x) {
+                            isRight = true;
+                        }
+                        addTag(new Point(x, y), isRight);
+                    } else {
+
                     }
-                    addTag(new Point(x, y), isRight);
+
+
                 } else {
 //                    if (getVisibility() != View.INVISIBLE) {
 //                        setVisibility(View.INVISIBLE);
