@@ -96,8 +96,8 @@ public class PhotoEditFragment extends Fragment {
         mImageView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                Log.e("TAG", "onTouch: ");
-                return false;
+                Log.e("TAG", "onTouch: " + event);
+                return true;
             }
         });
 

@@ -1,5 +1,6 @@
 package com.mcxtzhang.redbookeditphoto.widget;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -40,7 +41,7 @@ public class TagContainerView extends FrameLayout {
     private Context mContext;
     public static final int MODE_EDIT = 0;
     public static final int MODE_VIEW = 1;
-    private int mode = MODE_EDIT;
+    private int mode = MODE_VIEW;
 
     private TextView mDelButton;
     private final Rect mDelButtonRect = new Rect();
@@ -170,6 +171,7 @@ public class TagContainerView extends FrameLayout {
 
 
                 } else {
+                    setVisibility(GONE);
 //                    if (getVisibility() != View.INVISIBLE) {
 //                        setVisibility(View.INVISIBLE);
 //                    } else {
@@ -257,6 +259,14 @@ public class TagContainerView extends FrameLayout {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         Log.d(TAG, "onTouchEvent() called with: event = [" + event + "]");
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                if (mode == MODE_VIEW) {
+                    setVisibility(GONE);
+                    return false;
+                }
+                break;
+        }
         return mTagParentGestureDetector.onTouchEvent(event);
 
 //        if (isDeled) {
@@ -288,7 +298,7 @@ public class TagContainerView extends FrameLayout {
                 private Point mDownLocation;
 
                 @Override
-                public boolean onTouch(View v, MotionEvent ev) {
+                public boolean onTouch(final View v, MotionEvent ev) {
                     Log.i(TAG, "onTouch() called with: v = [" + v + "], ev = [" + ev + "]");
                     switch (ev.getAction()) {
                         case MotionEvent.ACTION_DOWN:
@@ -302,9 +312,29 @@ public class TagContainerView extends FrameLayout {
                                 mTagViewList.remove(v);
                                 return true;
                             } else if (!mImageRect.contains((int) ev.getX(), (int) ev.getY())) {
-                                ((TagView) v).setLocation(mDownLocation);
+                                ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1)
+                                        .setDuration(100);
+                                final Point startPosition = ((TagView) v).getLocation();
+
+                                valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                                    Point tempPoint = new Point();
+
+                                    @Override
+                                    public void onAnimationUpdate(ValueAnimator animation) {
+                                        float animatedValue = (float) animation.getAnimatedValue();
+
+                                        float x = startPosition.x - mDownLocation.x;
+                                        float y = startPosition.y - mDownLocation.y;
+                                        tempPoint.set((int) (startPosition.x - x * animatedValue),
+                                                (int) (startPosition.y - y * animatedValue));
+
+                                        ((TagView) v).setLocation(tempPoint);
+                                    }
+                                });
+                                valueAnimator.start();
+
                             }
-                            mDownLocation = null;
+
                             break;
 
                     }
