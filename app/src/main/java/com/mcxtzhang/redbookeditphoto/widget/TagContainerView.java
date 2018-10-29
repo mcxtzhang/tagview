@@ -41,7 +41,7 @@ public class TagContainerView extends FrameLayout {
     private Context mContext;
     public static final int MODE_EDIT = 0;
     public static final int MODE_VIEW = 1;
-    private int mode = MODE_VIEW;
+    private int mode = MODE_EDIT;
 
     private TextView mDelButton;
     private final Rect mDelButtonRect = new Rect();
@@ -171,7 +171,7 @@ public class TagContainerView extends FrameLayout {
 
 
                 } else {
-                    setVisibility(GONE);
+                    //setVisibility(GONE);
 //                    if (getVisibility() != View.INVISIBLE) {
 //                        setVisibility(View.INVISIBLE);
 //                    } else {
@@ -189,6 +189,15 @@ public class TagContainerView extends FrameLayout {
                 //在当前基础上移动
                 mMatrix.set(mTargetImageView.getImageMatrix());
                 mMatrix.getValues(mMatrixValues);
+/*
+                if (mode == MODE_VIEW) {
+                    //处于图片顶部，且 手指向下滑动
+                    if (mMatrixValues[Matrix.MTRANS_Y] == 0 && distanceY < 0) {
+                        dispatchTouchEvent2Parent(e1);
+                        return false;
+                    }
+                }*/
+
                 distanceY = checkDyBound(mMatrixValues, -distanceY);
                 mMatrix.postTranslate(0, distanceY);
                 mTargetImageView.setImageMatrix(mMatrix);
@@ -259,14 +268,33 @@ public class TagContainerView extends FrameLayout {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         Log.d(TAG, "onTouchEvent() called with: event = [" + event + "]");
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
+        if (mode == MODE_VIEW) {
+            Log.d(TAG, "onTouchEvent() called with: mode = [标签纯展示]，不处理触摸事件");
+            return false;
+        }
+
+/*        mMatrix.set(mTargetImageView.getImageMatrix());
+        mMatrix.getValues(mMatrixValues);
+        Log.d(TAG, "onTouchEvent() called with: MTRANS_Y = [" + mMatrixValues[Matrix.MTRANS_Y] + "]");
+        if (getVisibility() == GONE) {
+            return false;
+        }
+        Log.d(TAG, "true onTouchEvent() called with: ");
+        switch (event.getActionMasked()) {
+*//*            case MotionEvent.ACTION_DOWN:
                 if (mode == MODE_VIEW) {
-                    setVisibility(GONE);
+
+
+                }
+                break;*//*
+            case MotionEvent.ACTION_POINTER_DOWN:
+                if (mode == MODE_VIEW) {
+                    dispatchTouchEvent2Parent(event);
                     return false;
                 }
                 break;
-        }
+
+        }*/
         return mTagParentGestureDetector.onTouchEvent(event);
 
 //        if (isDeled) {
@@ -276,6 +304,11 @@ public class TagContainerView extends FrameLayout {
 //
 //        }
     }
+
+/*    private void dispatchTouchEvent2Parent(MotionEvent event) {
+        setVisibility(GONE);
+        ((ViewGroup) getParent()).dispatchTouchEvent(MotionEvent.obtainNoHistory(event));
+    }*/
 
     private void addTag(Point point, boolean isRight) {
         TagView tagView = new TagView(mContext);
