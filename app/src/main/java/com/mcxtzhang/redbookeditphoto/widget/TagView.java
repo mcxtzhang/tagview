@@ -4,7 +4,9 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.CornerPathEffect;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -39,8 +41,8 @@ public class TagView extends View {
      * 可通过xml修改的配置
      */
     private final String ELLIPSIS_HINT = "...";
-    private int MAX_TEXT_SHOW_COUNT = 10;
-    private int MIN_TEXT_SHOW_COUNT = 2;
+    private int MAX_TEXT_SHOW_COUNT = 13;
+    private int MIN_TEXT_SHOW_COUNT = 3;
     //private int mTextShowCount = 0;
 
     /**
@@ -65,27 +67,31 @@ public class TagView extends View {
     private int mPointRadius;
     private Paint mRingPaint;
     private int mRingRadius;
-
-    //横线
-    private Paint mLinePaint;
-    private int mLineStartX;
-    private int mLineWidth;
-    private int mLineHeight;
+    private int mRingTextGap;
 
     //文字区域的边框
     private Paint mTextBorderPaint;
+    private Path mTextBorderPath = new Path();
     private RectF mBorderRect;
-    private int mRadiusTextBorder;
     private int mTextBorderStartX;
+    //边框线的宽度
     private int mStrokeWidth;
+    //是标签三角形的两点水平距离(纯draw使用)
+    private float mBgLeftOffset;
     //文字区域的背景
     private Paint mTextBgPaint;
-    private int mTextBgStartX;
+    //private int mTextBgStartX;
+    //文字区域边距属性
+    //文字区域，距离竖线的padding
+    private int mTextBorderPaddingVerticalLine;
+    //距离箭头的padding
+    private int mTextBorderPaddingArrow;
 
     //小icon
     private boolean isShowIcon;
     private int mIconWidth;
     private int mIconPaddingRight;
+    private int mIconPaddingTop;
     private Bitmap mIconBitmap;
     private int mIconDrawStartX;
 
@@ -103,6 +109,10 @@ public class TagView extends View {
         init(context);
     }
 
+    private static final String COLOR_BG = "#66222222";
+
+    private static final String COLOR_BORDER = "#4FFFFFFF";
+
     private void init(Context context) {
         mContext = context;
         DisplayMetrics metrics = mContext.getApplicationContext().getResources().getDisplayMetrics();
@@ -112,7 +122,7 @@ public class TagView extends View {
         mRingRadius = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, metrics);
         mRingPaint = new Paint();
         mRingPaint.setAntiAlias(true);
-        mRingPaint.setColor(Color.parseColor("#b2000000"));
+        mRingPaint.setColor(Color.parseColor("#66000000"));
 
         mPointRadius = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 3, metrics);
         mPointPaint = new Paint();
@@ -120,27 +130,33 @@ public class TagView extends View {
         mPointPaint.setColor(Color.WHITE);
 
         mStrokeWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, metrics);
-        mLinePaint = new Paint();
-        mLinePaint.setAntiAlias(true);
-        mLinePaint.setColor(Color.parseColor("#88ffffff"));
-        mLinePaint.setStrokeWidth(mStrokeWidth);
-        mLineWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 14, metrics);
-        mLineHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0.5f, metrics);
-        //mLineStartX = mRingRadius + mPointRadius;
+        mRingTextGap = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, metrics);
 
         mBorderRect = new RectF();
-        mTextBorderPaint = mLinePaint;
+        mTextBorderPaint = new Paint();
+        mTextBorderPaint.setAntiAlias(true);
+        mTextBorderPaint.setColor(Color.parseColor("#88ffffff"));
+        mTextBorderPaint.setStrokeWidth(mStrokeWidth);
+
         mTextBorderPaint.setStyle(Paint.Style.STROKE);
-        mRadiusTextBorder = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 31, metrics);
+        mTextBorderPaint.setColor(Color.parseColor(COLOR_BORDER));
+        CornerPathEffect pathEffect = new CornerPathEffect(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 3, metrics));
+        mTextBorderPaint.setPathEffect(pathEffect);
         //mTextBorderStartX = mLineStartX + mLineWidth;
 
         mTextBgPaint = new Paint();
         mTextBgPaint.setAntiAlias(true);
-        mTextBgPaint.setColor(Color.parseColor("#bf000000"));
+        mTextBgPaint.setColor(Color.parseColor(COLOR_BG));
+        mTextBgPaint.setPathEffect(pathEffect);
+
+        mBgLeftOffset = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 9, metrics);
+        mTextBorderPaddingVerticalLine = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 9, metrics);
         //mTextBgStartX = mTextBorderStartX + mStrokeWidth;
 
         mIconWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 13, metrics);
-        mIconPaddingRight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2, metrics);
+        mTextBorderPaddingArrow = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 12, metrics);
+        mIconPaddingRight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, metrics);
+        mIconPaddingTop = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, metrics);
 
 
         mTextPaint = mPointPaint;
@@ -176,7 +192,7 @@ public class TagView extends View {
                 if (isShowIcon) {
                     textWidth += (mIconWidth + mIconPaddingRight);
                 }
-                int computeSize = mRingRadius + mLineWidth + mStrokeWidth + textWidth + mStrokeWidth;
+                int computeSize = mRingRadius * 2 + mRingTextGap + mStrokeWidth + mTextBorderPaddingArrow + textWidth + mTextBorderPaddingVerticalLine + mStrokeWidth;
 
                 //边界计算
                 ViewParent parent = getParent();
@@ -202,7 +218,7 @@ public class TagView extends View {
                             if (isShowIcon) {
                                 textWidth += (mIconWidth + mIconPaddingRight);
                             }
-                            computeSize = mRingRadius + mLineWidth + mStrokeWidth + textWidth + mStrokeWidth;
+                            computeSize = mRingRadius * 2 + mRingTextGap + mStrokeWidth + mTextBorderPaddingArrow + textWidth + mTextBorderPaddingVerticalLine + mStrokeWidth;
                         }
 
                     } else {
@@ -221,7 +237,7 @@ public class TagView extends View {
                             if (isShowIcon) {
                                 textWidth += (mIconWidth + mIconPaddingRight);
                             }
-                            computeSize = mRingRadius + mLineWidth + mStrokeWidth + textWidth + mStrokeWidth;
+                            computeSize = mRingRadius * 2 + mRingTextGap + mStrokeWidth + mTextBorderPaddingArrow + textWidth + mTextBorderPaddingVerticalLine + mStrokeWidth;
                         }
                     }
                     //如果resize过，说明接近边缘
@@ -239,11 +255,11 @@ public class TagView extends View {
             case MeasureSpec.EXACTLY:
                 break;
             case MeasureSpec.AT_MOST:
-                int computeSize = (getPaddingTop() + getPaddingBottom() + mIconWidth + mStrokeWidth + mStrokeWidth);
+                int computeSize = (getPaddingTop() + getPaddingBottom() + mIconWidth + mStrokeWidth + mStrokeWidth + mIconPaddingTop + mIconPaddingTop);
                 hSize = computeSize < hSize ? computeSize : hSize;
                 break;
             case MeasureSpec.UNSPECIFIED:
-                computeSize = (getPaddingTop() + getPaddingBottom() + mIconWidth + mStrokeWidth + mStrokeWidth);
+                computeSize = (getPaddingTop() + getPaddingBottom() + mIconWidth + mStrokeWidth + mStrokeWidth + mIconPaddingTop + mIconPaddingTop);
                 hSize = computeSize;
                 break;
         }
@@ -269,15 +285,15 @@ public class TagView extends View {
         int verticalMiddle = mHeight / 2;
         //因为存在边缘限制，会挤压View的宽度，所以先确定不会挤压的部分，再利用宽度-这些部分 = 剩余文字区域的宽度
 
-        //先画线，再画黑圆环盖在线上，最后用白色小圆点盖在黑色圆环上
+        //先画黑圆环，再用白色小圆点盖在黑色圆环上
         if (isRight) {
-            mLineStartX = mRingRadius + mPointRadius;
+            //mLineStartX = mRingRadius + mPointRadius;
             mCircleCentreX = mRingRadius;
         } else {
-            mLineStartX = mWidth - mRingRadius - mPointRadius - mLineWidth;
+            //mLineStartX = mWidth - mRingRadius - mPointRadius - mLineWidth;
             mCircleCentreX = mWidth - mRingRadius;
         }
-        canvas.drawLine(mLineStartX, verticalMiddle, mLineStartX + mLineWidth, verticalMiddle, mLinePaint);
+        //canvas.drawLine(mLineStartX, verticalMiddle, mLineStartX + mLineWidth, verticalMiddle, mLinePaint);
         canvas.drawCircle(mCircleCentreX, verticalMiddle, mRingRadius, mRingPaint);
         canvas.drawCircle(mCircleCentreX, verticalMiddle, mPointRadius, mPointPaint);
 
@@ -285,40 +301,60 @@ public class TagView extends View {
         int baseX;
         if (isRight) {
             //文字背景
-            mTextBorderStartX = mLineStartX + mLineWidth;
-            mBorderRect.set(mTextBorderStartX, 0, mWidth, mHeight);
-            canvas.drawRoundRect(mBorderRect, mRadiusTextBorder, mRadiusTextBorder, mTextBorderPaint);
-            mBorderRect.set(mTextBorderStartX + mStrokeWidth, mStrokeWidth, mWidth - mStrokeWidth, mHeight - mStrokeWidth);
-            canvas.drawRoundRect(mBorderRect, mRadiusTextBorder, mRadiusTextBorder, mTextBgPaint);
+            mTextBorderStartX = mRingRadius * 2 + mRingTextGap;
+            mTextBorderPath.reset();
+
+            mTextBorderPath.moveTo(mTextBorderStartX, verticalMiddle);// 此点为多边形的起点
+            mTextBorderPath.lineTo(mTextBorderStartX + mBgLeftOffset, 0 + mStrokeWidth);
+            mTextBorderPath.lineTo(mWidth - mStrokeWidth, 0 + mStrokeWidth);
+            mTextBorderPath.lineTo(mWidth - mStrokeWidth, mHeight - mStrokeWidth);
+            mTextBorderPath.lineTo(mTextBorderStartX + mBgLeftOffset, mHeight - mStrokeWidth);
+            mTextBorderPath.close(); // 使这些点构成封闭的多边形
+            canvas.drawPath(mTextBorderPath, mTextBgPaint);
+            canvas.drawPath(mTextBorderPath, mTextBorderPaint);
+
             //小icon
+            mIconDrawStartX = mTextBorderStartX + mStrokeWidth + mTextBorderPaddingArrow;
+
             if (isShowIcon) {
-                mIconDrawStartX = mTextBorderStartX + ((mWidth - mTextBorderStartX - mTextBounds.width() - mIconWidth - mIconPaddingRight) >> 1);
-                baseX = mIconDrawStartX + mIconWidth + mIconPaddingRight;
-                mBorderRect.set(mIconDrawStartX, mStrokeWidth + getPaddingTop(), mIconDrawStartX + mIconWidth, mStrokeWidth + getPaddingTop() + mIconWidth);
+                mBorderRect.set(mIconDrawStartX, mStrokeWidth + getPaddingTop() + mIconPaddingTop,
+                        mIconDrawStartX + mIconWidth, mStrokeWidth + getPaddingTop() + mIconPaddingTop + mIconWidth);
                 canvas.drawBitmap(mIconBitmap,
                         null,
                         mBorderRect,
                         mTextPaint);
+                baseX = mIconDrawStartX + mIconWidth + mIconPaddingRight;
             } else {
-                baseX = mTextBorderStartX + ((mWidth - mTextBorderStartX - mTextBounds.width()) >> 1);
+                baseX = mIconDrawStartX;
             }
         } else {
             //文字背景
-            mBorderRect.set(0, 0, mLineStartX, mHeight);
-            canvas.drawRoundRect(mBorderRect, mRadiusTextBorder, mRadiusTextBorder, mTextBorderPaint);
-            mBorderRect.set(mStrokeWidth, mStrokeWidth, mLineStartX - mStrokeWidth, mHeight - mStrokeWidth);
-            canvas.drawRoundRect(mBorderRect, mRadiusTextBorder, mRadiusTextBorder, mTextBgPaint);
+            mTextBorderStartX = mWidth - mRingRadius * 2 - mRingTextGap;
+            mTextBorderPath.reset();
+
+            mTextBorderPath.moveTo(mTextBorderStartX, verticalMiddle);// 此点为多边形的起点
+            mTextBorderPath.lineTo(mTextBorderStartX - mBgLeftOffset, mHeight - mStrokeWidth);
+            mTextBorderPath.lineTo(0 + mStrokeWidth, mHeight - mStrokeWidth);
+            mTextBorderPath.lineTo(0 + mStrokeWidth, 0 + mStrokeWidth);
+            mTextBorderPath.lineTo(mTextBorderStartX - mBgLeftOffset, 0 + mStrokeWidth);
+            mTextBorderPath.close(); // 使这些点构成封闭的多边形
+            canvas.drawPath(mTextBorderPath, mTextBgPaint);
+            canvas.drawPath(mTextBorderPath, mTextBorderPaint);
+
             //小icon
             if (isShowIcon) {
-                mIconDrawStartX = (mLineStartX - mTextBounds.width() - mIconWidth - mIconPaddingRight) >> 1;
-                baseX = mIconDrawStartX + mIconWidth + mIconPaddingRight;
-                mBorderRect.set(mIconDrawStartX, mStrokeWidth + getPaddingTop(), mIconDrawStartX + mIconWidth, mStrokeWidth + getPaddingTop() + mIconWidth);
+                //mIconDrawStartX = (mLineStartX - mTextBounds.width() - mIconWidth - mIconPaddingRight) >> 1;
+                mIconDrawStartX = mStrokeWidth + mTextBorderPaddingVerticalLine;
+                mBorderRect.set(mIconDrawStartX, mStrokeWidth + getPaddingTop() + mIconPaddingTop,
+                        mIconDrawStartX + mIconWidth, mStrokeWidth + getPaddingTop() + mIconPaddingTop + mIconWidth);
                 canvas.drawBitmap(mIconBitmap,
                         null,
                         mBorderRect,
                         mTextPaint);
+                baseX = mIconDrawStartX + mIconWidth + mIconPaddingRight;
+
             } else {
-                baseX = ((mLineStartX - mTextBounds.width()) >> 1);
+                baseX = mStrokeWidth + mTextBorderPaddingVerticalLine;
             }
         }
         // 计算Baseline绘制的Y坐标
@@ -425,14 +461,21 @@ public class TagView extends View {
     }*/
 
     private void computeMinWidth() {
-        int paddingLeft = getPaddingLeft();
-        int paddingRight = getPaddingRight();
+        //int paddingLeft = getPaddingLeft();
+        //int paddingRight = getPaddingRight();
         int textLength = mText.length();
 
-        int minShowLength = textLength > MIN_TEXT_SHOW_COUNT ? MIN_TEXT_SHOW_COUNT : textLength;
-        mTextPaint.getTextBounds(mText.substring(0, minShowLength) + ELLIPSIS_HINT, 0, minShowLength + ELLIPSIS_HINT.length(), mTextBounds);//测量计算文字所在矩形，可以得到宽高
-        mMinWidth = paddingLeft + paddingRight + mTextBounds.width() + mStrokeWidth + mStrokeWidth;
-        mMinWidth += mRingRadius + mPointRadius + mLineWidth;
+//        int minShowLength = textLength > MIN_TEXT_SHOW_COUNT ? MIN_TEXT_SHOW_COUNT : textLength;
+//        mTextPaint.getTextBounds(mText.substring(0, minShowLength) + ELLIPSIS_HINT, 0, minShowLength + ELLIPSIS_HINT.length(), mTextBounds);//测量计算文字所在矩形，可以得到宽高
+
+        if (textLength > MIN_TEXT_SHOW_COUNT) {
+            mTextPaint.getTextBounds(mText.substring(0, MIN_TEXT_SHOW_COUNT) + ELLIPSIS_HINT, 0, MIN_TEXT_SHOW_COUNT + ELLIPSIS_HINT.length(), mTextBounds);//测量计算文字所在矩形，可以得到宽高
+        } else {
+            mTextPaint.getTextBounds(mText, 0, textLength, mTextBounds);//测量计算文字所在矩形，可以得到宽高
+        }
+
+
+        mMinWidth = mRingRadius * 2 + mRingTextGap + +mStrokeWidth + mTextBorderPaddingArrow + mTextBounds.width() + mTextBorderPaddingVerticalLine + mStrokeWidth;
         if (isShowIcon) {
             mMinWidth += mIconWidth + mIconPaddingRight;
         }
