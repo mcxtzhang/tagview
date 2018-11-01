@@ -32,6 +32,10 @@ public class FeedDetailFragment extends Fragment {
         TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.5, 0.5));
         TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.7, 0.7));
         TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.9, 0.9));
+
+        //测试右边界
+        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.95, 0.5));
+
     }
 
     public static Map<Integer, List<UploadPhotoTagData>> sIntegerListMap = new HashMap<>();

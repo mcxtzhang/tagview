@@ -148,6 +148,63 @@ public class TagContainerView extends FrameLayout {
         return this;
     }
 
+    /**
+     * 编辑侧、展示侧都会用到。
+     * 但编辑时，显示所有的标签。
+     * 展示时，只显示可见区域的标签
+     *
+     * @param tagPositions
+     */
+    public void loadTags(final List<UploadPhotoTagData> tagPositions) {
+        if (null == tagPositions) return;
+        post(new Runnable() {
+            @Override
+            public void run() {
+                Rect bounds = mTargetImageView.getDrawable().getBounds();
+                int drawableWidth = bounds.right - bounds.left;
+                int drawableHeight = bounds.bottom - bounds.top;
+
+                float[] matrixValues = new float[9];
+                mTargetImageView.getImageMatrix().getValues(matrixValues);
+
+
+                Rect visibleRect = null;
+                if (mode == MODE_VIEW) {
+                    DisplayMetrics metrics = mContext.getApplicationContext().getResources().getDisplayMetrics();
+                    // mIconWidth + mStrokeWidth + mStrokeWidth + mIconPaddingTop + mIconPaddingTop;
+                    int tagMeasuredHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TagView.STROKE_WIDTH_DP + TagView.ICON_PADDING_TOP_OR_BOTTOM_DP + TagView.ICON_WIDTH_DP + TagView.ICON_PADDING_TOP_OR_BOTTOM_DP + TagView.STROKE_WIDTH_DP, metrics);
+
+                    int topLimitInView = tagMeasuredHeight;
+                    int bottomLimitInView = mTargetImageView.getHeight() - tagMeasuredHeight;
+                    visibleRect = new Rect(0, topLimitInView, mTargetImageView.getWidth(), bottomLimitInView);
+                }
+
+
+                //判断Tag是否在可见范围，仅仅是宽高比严重失调的图 才会出现部分tag不可见。大部分情况下，所有Tag都是在可见范围。
+                //所以在遍历Tag时，还是将每一个Tag的在图片中的位置都计算一遍，以便后面计算margin
+
+                for (UploadPhotoTagData tagPosition : tagPositions) {
+                    //将百分比换算成具体的像素
+                    double originX = tagPosition.xPosition * drawableWidth;
+                    double originY = tagPosition.yPosition * drawableHeight;
+
+                    int offsetXInView = TagMatrixUtil.getMatrixX(matrixValues, originX);
+                    int offsetYInView = TagMatrixUtil.getMatrixY(matrixValues, originY);
+
+                    if (mode == MODE_VIEW) {
+                        if (visibleRect.contains(offsetXInView, offsetYInView)) {
+                            addTag(new Point(offsetXInView, offsetYInView), tagPosition.isRight);
+                        }
+                    } else {
+                        addTag(new Point(offsetXInView, offsetYInView), tagPosition.isRight);
+                    }
+
+                }
+            }
+        });
+
+    }
+
     public TagContainerView bindDelBtn(TextView delButton) {
         if (null == delButton) return this;
         mDelButton = delButton;
@@ -262,17 +319,6 @@ public class TagContainerView extends FrameLayout {
 
 
     }
-//
-//    private void createDelButton() {
-//        if (mode == MODE_VIEW) {
-//            return;
-//        }
-//        mDelButton = new Button(mContext);
-//        mDelButton.setText("删除");
-//        FrameLayout.LayoutParams lp = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-//        lp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-//        addView(mDelButton, lp);
-//    }
 
 //    @Override
 //    public boolean dispatchTouchEvent(MotionEvent ev) {
@@ -330,7 +376,7 @@ public class TagContainerView extends FrameLayout {
     }*/
 
     private void addTag(Point point, boolean isRight) {
-        TagView tagView = new TagView(mContext);
+        final TagView tagView = new TagView(mContext);
 /*        DisplayMetrics metrics = mContext.getApplicationContext().getResources().getDisplayMetrics();
         int paddingHorizontal = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, metrics);
         int paddingVertical = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 3, metrics);
@@ -342,6 +388,13 @@ public class TagContainerView extends FrameLayout {
         tagView.setShowIcon(Math.random() > 0.5 ? true : false)
                 .setIconBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.little));
         tagView.setOrientationAndPosition(isRight, point);
+        //解决tag完全显示，可能会超出左右边界的问题
+        tagView.post(new Runnable() {
+            @Override
+            public void run() {
+                tagView.requestLayout();
+            }
+        });
 
         if (mode == MODE_EDIT) {
             final GestureDetectorCompat gestureDetectorCompat = new GestureDetectorCompat(mContext, new TagGestureListener(tagView));
@@ -443,63 +496,6 @@ public class TagContainerView extends FrameLayout {
             result.add(uploadPhotoTagData);
         }
         return result;
-    }
-
-    /**
-     * 编辑侧、展示侧都会用到。
-     * 但编辑时，显示所有的标签。
-     * 展示时，只显示可见区域的标签
-     *
-     * @param tagPositions
-     */
-    public void loadTags(final List<UploadPhotoTagData> tagPositions) {
-        if (null == tagPositions) return;
-        post(new Runnable() {
-            @Override
-            public void run() {
-                Rect bounds = mTargetImageView.getDrawable().getBounds();
-                int drawableWidth = bounds.right - bounds.left;
-                int drawableHeight = bounds.bottom - bounds.top;
-
-                float[] matrixValues = new float[9];
-                mTargetImageView.getImageMatrix().getValues(matrixValues);
-
-
-                Rect visibleRect = null;
-                if (mode == MODE_VIEW) {
-                    DisplayMetrics metrics = mContext.getApplicationContext().getResources().getDisplayMetrics();
-                    // mIconWidth + mStrokeWidth + mStrokeWidth + mIconPaddingTop + mIconPaddingTop;
-                    int tagMeasuredHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TagView.STROKE_WIDTH_DP + TagView.ICON_PADDING_TOP_OR_BOTTOM_DP + TagView.ICON_WIDTH_DP + TagView.ICON_PADDING_TOP_OR_BOTTOM_DP + TagView.STROKE_WIDTH_DP, metrics);
-
-                    int topLimitInView = tagMeasuredHeight;
-                    int bottomLimitInView = mTargetImageView.getHeight() - tagMeasuredHeight;
-                    visibleRect = new Rect(0, topLimitInView, mTargetImageView.getWidth(), bottomLimitInView);
-                }
-
-
-                //判断Tag是否在可见范围，仅仅是宽高比严重失调的图 才会出现部分tag不可见。大部分情况下，所有Tag都是在可见范围。
-                //所以在遍历Tag时，还是将每一个Tag的在图片中的位置都计算一遍，以便后面计算margin
-
-                for (UploadPhotoTagData tagPosition : tagPositions) {
-                    //将百分比换算成具体的像素
-                    double originX = tagPosition.xPosition * drawableWidth;
-                    double originY = tagPosition.yPosition * drawableHeight;
-
-                    int offsetXInView = TagMatrixUtil.getMatrixX(matrixValues, originX);
-                    int offsetYInView = TagMatrixUtil.getMatrixY(matrixValues, originY);
-
-                    if (mode == MODE_VIEW) {
-                        if (visibleRect.contains(offsetXInView, offsetYInView)) {
-                            addTag(new Point(offsetXInView, offsetYInView), tagPosition.isRight);
-                        }
-                    } else {
-                        addTag(new Point(offsetXInView, offsetYInView), tagPosition.isRight);
-                    }
-
-                }
-            }
-        });
-
     }
 
 
