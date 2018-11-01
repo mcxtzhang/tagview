@@ -11,34 +11,22 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.mcxtzhang.redbookeditphoto.R;
-import com.mcxtzhang.redbookeditphoto.UploadPhotoTagData;
+import com.mcxtzhang.redbookeditphoto.base.UGCPicTag;
 import com.mcxtzhang.redbookeditphoto.widget.TagContainerView;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import static com.mcxtzhang.redbookeditphoto.LaunchActivity.TAG_DATA_LIST;
 
 /**
  * Created by zhangxutong on 2018/6/20.
  */
 
 public class FeedDetailFragment extends Fragment {
-    private static final List<UploadPhotoTagData> TAG_DATA_LIST = new LinkedList<>();
 
-    static {
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.1, 0.01));
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.3, 0.3));
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.5, 0.5));
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.7, 0.7));
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.9, 0.9));
-
-        //测试右边界
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.95, 0.5));
-
-    }
-
-    public static Map<Integer, List<UploadPhotoTagData>> sIntegerListMap = new HashMap<>();
+    public static Map<Integer, List<UGCPicTag>> sIntegerListMap = new HashMap<>();
 
     public static FeedDetailFragment newInstance(int position) {
         FeedDetailFragment photoEditFragment = new FeedDetailFragment();
@@ -92,7 +80,7 @@ public class FeedDetailFragment extends Fragment {
 
                 //图片加载完毕
                 //开始加载标签
-                List<UploadPhotoTagData> points = sIntegerListMap.get(mPosition);
+                List<UGCPicTag> points = sIntegerListMap.get(mPosition);
                 if (points == null /*&& mPosition == 0*/) {
                     points = TAG_DATA_LIST;
                 }

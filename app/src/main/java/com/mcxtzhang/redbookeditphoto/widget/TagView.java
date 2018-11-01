@@ -38,7 +38,8 @@ public class TagView extends View {
     /**
      * 通过java 方法设置
      */
-    private boolean isRight;
+    //标签尖角朝向(1:向左，2:向右)
+    private int mDirection;
     private Point mLocation;
     private String mText = "";
     /**
@@ -205,7 +206,7 @@ public class TagView extends View {
                     ViewGroup viewGroup = (ViewGroup) parent;
                     int parentSpace = 0;
 
-                    if (isRight) {
+                    if (isLeft()) {
                         if (getLeft() == 0) {
                             parentSpace = viewGroup.getWidth() - viewGroup.getPaddingLeft() - viewGroup.getPaddingRight();
                         } else {
@@ -290,7 +291,7 @@ public class TagView extends View {
         //因为存在边缘限制，会挤压View的宽度，所以先确定不会挤压的部分，再利用宽度-这些部分 = 剩余文字区域的宽度
 
         //先画黑圆环，再用白色小圆点盖在黑色圆环上
-        if (isRight) {
+        if (isLeft()) {
             //mLineStartX = mRingRadius + mPointRadius;
             mCircleCentreX = mRingRadius;
         } else {
@@ -303,7 +304,7 @@ public class TagView extends View {
 
 
         int baseX;
-        if (isRight) {
+        if (isLeft()) {
             //文字背景
             mTextBorderStartX = mRingRadius * 2 + mRingTextGap;
             mTextBorderPath.reset();
@@ -392,14 +393,19 @@ public class TagView extends View {
         return this;
     }
 
-    public void setOrientationAndPosition(boolean isRight, Point point) {
-        this.isRight = isRight;
+    public void setDirectionAndPosition(int direction, Point point) {
+        this.mDirection = direction;
         this.mLocation = point;
         updateLocation();
     }
 
     public void changeOrientation() {
-        this.isRight = !this.isRight;
+        if (mDirection == 1) {
+            mDirection = 2;
+        } else {
+            mDirection = 1;
+        }
+
         fixLocation();
         updateLocation();
         post(new Runnable() {
@@ -439,8 +445,12 @@ public class TagView extends View {
         return this;
     }
 
-    public boolean isRight() {
-        return isRight;
+    public int getDirection() {
+        return mDirection;
+    }
+
+    private boolean isLeft() {
+        return mDirection == 1;
     }
 
     public Point getLocation() {
@@ -513,7 +523,7 @@ public class TagView extends View {
             mLocation.y += parentBottomSpace;
         }
 
-        if (isRight) {
+        if (isLeft()) {
             //right
             int parentRightSpace = parentWidth - parentPaddingRight;
             parentRightSpace = parentRightSpace - mMinWidth - mLocation.x;
@@ -549,7 +559,7 @@ public class TagView extends View {
         if (lp == null) {
             lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
-        if (isRight) {
+        if (isLeft()) {
             lp.gravity = Gravity.LEFT;
             lp.leftMargin = mLocation.x - mParent.getPaddingLeft();
         } else {

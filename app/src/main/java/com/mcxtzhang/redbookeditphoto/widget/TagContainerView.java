@@ -2,15 +2,18 @@ package com.mcxtzhang.redbookeditphoto.widget;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.GestureDetectorCompat;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -25,8 +28,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.mcxtzhang.redbookeditphoto.R;
-import com.mcxtzhang.redbookeditphoto.TagMatrixUtil;
-import com.mcxtzhang.redbookeditphoto.UploadPhotoTagData;
+import com.mcxtzhang.redbookeditphoto.base.UGCPicTag;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -155,7 +157,7 @@ public class TagContainerView extends FrameLayout {
      *
      * @param tagPositions
      */
-    public void loadTags(final List<UploadPhotoTagData> tagPositions) {
+    public void loadTags(final List<UGCPicTag> tagPositions) {
         if (null == tagPositions) return;
         post(new Runnable() {
             @Override
@@ -183,7 +185,7 @@ public class TagContainerView extends FrameLayout {
                 //判断Tag是否在可见范围，仅仅是宽高比严重失调的图 才会出现部分tag不可见。大部分情况下，所有Tag都是在可见范围。
                 //所以在遍历Tag时，还是将每一个Tag的在图片中的位置都计算一遍，以便后面计算margin
 
-                for (UploadPhotoTagData tagPosition : tagPositions) {
+                for (UGCPicTag tagPosition : tagPositions) {
                     //将百分比换算成具体的像素
                     double originX = tagPosition.xPosition * drawableWidth;
                     double originY = tagPosition.yPosition * drawableHeight;
@@ -193,10 +195,10 @@ public class TagContainerView extends FrameLayout {
 
                     if (mode == MODE_VIEW) {
                         if (visibleRect.contains(offsetXInView, offsetYInView)) {
-                            addTag(new Point(offsetXInView, offsetYInView), tagPosition.isRight);
+                            addTag(new Point(offsetXInView, offsetYInView), tagPosition);
                         }
                     } else {
-                        addTag(new Point(offsetXInView, offsetYInView), tagPosition.isRight);
+                        addTag(new Point(offsetXInView, offsetYInView), tagPosition);
                     }
 
                 }
@@ -235,12 +237,16 @@ public class TagContainerView extends FrameLayout {
                     int y = (int) e.getY();
 
                     if (mImageRect.contains(x, y)) {
-                        boolean isRight = false;
+                        int direction = 2;
                         int containerWidth = getWidth();
                         if (containerWidth / 2 > x) {
-                            isRight = true;
+                            direction = 1;
                         }
-                        addTag(new Point(x, y), isRight);
+                        // TODO: 2018/11/1
+                        UGCPicTag picTag = new UGCPicTag();
+                        picTag.direction = direction;
+                        picTag.content = "fadsfafdasfdas";
+                        addTag(new Point(x, y), picTag);
                     } else {
 
                     }
@@ -375,19 +381,48 @@ public class TagContainerView extends FrameLayout {
         ((ViewGroup) getParent()).dispatchTouchEvent(MotionEvent.obtainNoHistory(event));
     }*/
 
-    private void addTag(Point point, boolean isRight) {
+    private void addTag(Point point, final UGCPicTag picTag) {
         final TagView tagView = new TagView(mContext);
 /*        DisplayMetrics metrics = mContext.getApplicationContext().getResources().getDisplayMetrics();
         int paddingHorizontal = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, metrics);
         int paddingVertical = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 3, metrics);
         tagView.setPadding(paddingHorizontal, paddingVertical, paddingHorizontal, paddingVertical);*/
+
         tagView.setParent(this);
-        tagView.setText(Math.random() > 0.5 ? "地点啊地点六我是很多个字啊" : "正");
+
+        //模拟网络加载图片
         tagView.setBackgroundColor(Color.BLUE);
+        tagView.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                tagView.setIconBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.little));
+            }
+        }, 2000);
+
+        tagView.setText(picTag.content);
         tagView.setClickable(true);
-        tagView.setShowIcon(Math.random() > 0.5 ? true : false)
-                .setIconBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.little));
-        tagView.setOrientationAndPosition(isRight, point);
+        tagView.setShowIcon(!TextUtils.isEmpty(picTag.tagIconUrl))
+                .setIconBitmap(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
+        if (mode == MODE_VIEW && !TextUtils.isEmpty(picTag.tagJumpUrl)) {
+            tagView.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    tagView.setOnClickListener(new OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            String url = picTag.tagJumpUrl;
+                            Intent intent = new Intent(Intent.ACTION_VIEW,
+                                    Uri.parse(url));
+                            v.getContext().startActivity(intent);
+                        }
+                    });
+                }
+            });
+        }
+
+
+        tagView.setDirectionAndPosition(picTag.direction, point);
         //解决tag完全显示，可能会超出左右边界的问题
         tagView.post(new Runnable() {
             @Override
@@ -474,7 +509,8 @@ public class TagContainerView extends FrameLayout {
         }
     }
 
-    public List<UploadPhotoTagData> saveTags() {
+
+    public List<UGCPicTag> saveTags() {
         Rect bounds = mTargetImageView.getDrawable().getBounds();
         int width = bounds.right - bounds.left;
         int heigth = bounds.bottom - bounds.top;
@@ -482,18 +518,19 @@ public class TagContainerView extends FrameLayout {
         float[] matrixValues = new float[9];
         mTargetImageView.getImageMatrix().getValues(matrixValues);
 
-        List<UploadPhotoTagData> result = new LinkedList<>();
+        List<UGCPicTag> result = new LinkedList<>();
         for (TagView view : mTagViewList) {
             Point location = view.getLocation();
 
             float originX = TagMatrixUtil.getOriginX(matrixValues, location.x);
             float originY = TagMatrixUtil.getOriginY(matrixValues, location.y);
 
-            UploadPhotoTagData uploadPhotoTagData = new UploadPhotoTagData(1,
-                    originX / (width),
-                    originY / (heigth),
-                    view.isRight());
-            result.add(uploadPhotoTagData);
+            UGCPicTag picTag = new UGCPicTag();
+            picTag.xPosition = originX / (width);
+            picTag.yPosition = originY / (heigth);
+            picTag.direction = view.getDirection();
+
+            result.add(picTag);
         }
         return result;
     }

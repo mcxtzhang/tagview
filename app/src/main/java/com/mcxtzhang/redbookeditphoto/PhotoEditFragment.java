@@ -14,30 +14,20 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.mcxtzhang.redbookeditphoto.base.UGCPicTag;
 import com.mcxtzhang.redbookeditphoto.widget.TagContainerView;
+import com.mcxtzhang.redbookeditphoto.widget.TagMatrixUtil;
 
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+
+import static com.mcxtzhang.redbookeditphoto.LaunchActivity.TAG_DATA_LIST;
+import static com.mcxtzhang.redbookeditphoto.show.FeedDetailFragment.sIntegerListMap;
 
 /**
  * Created by zhangxutong on 2018/6/20.
  */
 
 public class PhotoEditFragment extends Fragment {
-    private static final List<UploadPhotoTagData> TAG_DATA_LIST = new LinkedList<>();
-
-    static {
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.1, 0.01));
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.4571428596973419, 0.4765799045562744));
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.2380952388048172, 0.8));
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.6761904954910278, 0.4939005672931671));
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.46095240116119385, 0.46555766463279724));
-    }
-
-    public static Map<Integer, List<UploadPhotoTagData>> sIntegerListMap = new HashMap<>();
-
     public static PhotoEditFragment newInstance(int position) {
         PhotoEditFragment photoEditFragment = new PhotoEditFragment();
         Bundle arguments = new Bundle();
@@ -149,7 +139,7 @@ public class PhotoEditFragment extends Fragment {
                 .bindDelBtn(mDelButton)
                 .bindImageView(mImageView);
 
-        List<UploadPhotoTagData> points = sIntegerListMap.get(mPosition);
+        List<UGCPicTag> points = sIntegerListMap.get(mPosition);
         if (points == null /*&& mPosition == 0*/) {
             points = TAG_DATA_LIST;
         }

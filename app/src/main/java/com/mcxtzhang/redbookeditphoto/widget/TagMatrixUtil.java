@@ -1,4 +1,4 @@
-package com.mcxtzhang.redbookeditphoto;
+package com.mcxtzhang.redbookeditphoto.widget;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
