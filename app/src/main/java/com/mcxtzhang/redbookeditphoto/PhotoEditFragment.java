@@ -135,7 +135,7 @@ public class PhotoEditFragment extends Fragment {
 
 
         mTagContainerView = rootView.findViewById(R.id.tagContainer);
-        mTagContainerView.openEditMode()
+        mTagContainerView.turnOnEditMode()
                 .bindDelBtn(mDelButton)
                 .bindImageView(mImageView);
 

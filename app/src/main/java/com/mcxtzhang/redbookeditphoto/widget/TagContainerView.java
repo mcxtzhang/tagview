@@ -3,6 +3,7 @@ package com.mcxtzhang.redbookeditphoto.widget;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -39,11 +40,24 @@ import java.util.List;
 
 public class TagContainerView extends FrameLayout {
     private static final String TAG = TagContainerView.class.getSimpleName();
+    public static final Bitmap TRANSPARENT_BITMAP = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_4444);
 
     private Context mContext;
-    public static final int MODE_EDIT = 0;
-    public static final int MODE_VIEW = 1;
+    /**
+     * 模式。
+     * 浏览：0，
+     * 编辑侧：1，
+     */
+    public static final int MODE_VIEW = 0;
+    public static final int MODE_EDIT = 1;
     private int mode = MODE_VIEW;
+
+    /**
+     * 具体子场景。
+     * feed详情页：1
+     */
+    public static final int SUB_MODE_FEED_DETAIL = 1;
+    private int sub_mode;
 
     private TextView mDelButton;
     private final Rect mDelButtonRect = new Rect();
@@ -74,8 +88,32 @@ public class TagContainerView extends FrameLayout {
         init(context);
     }
 
-    public TagContainerView openEditMode() {
+    /**
+     * 编辑模式
+     *
+     * @return
+     */
+    public TagContainerView turnOnEditMode() {
         return setMode(MODE_EDIT);
+    }
+
+    /**
+     * 大图浏览模式
+     *
+     * @return
+     */
+    public TagContainerView turnOnBigPicMode() {
+        return setMode(MODE_VIEW);
+    }
+
+    /**
+     * feed详情浏览模式
+     *
+     * @return
+     */
+    public TagContainerView turnOnFeedDetailMode() {
+        return setMode(MODE_VIEW)
+                .setSub_mode(SUB_MODE_FEED_DETAIL);
     }
 
     public TagContainerView setMode(int mode) {
@@ -85,6 +123,15 @@ public class TagContainerView extends FrameLayout {
 
     public int getMode() {
         return mode;
+    }
+
+    public int getSub_mode() {
+        return sub_mode;
+    }
+
+    public TagContainerView setSub_mode(int sub_mode) {
+        this.sub_mode = sub_mode;
+        return this;
     }
 
     public TagContainerView bindImageView(ImageView targetImageView) {
@@ -193,7 +240,7 @@ public class TagContainerView extends FrameLayout {
                     int offsetXInView = TagMatrixUtil.getMatrixX(matrixValues, originX);
                     int offsetYInView = TagMatrixUtil.getMatrixY(matrixValues, originY);
 
-                    if (mode == MODE_VIEW) {
+                    if (sub_mode == SUB_MODE_FEED_DETAIL) {
                         if (visibleRect.contains(offsetXInView, offsetYInView)) {
                             addTag(new Point(offsetXInView, offsetYInView), tagPosition);
                         }
@@ -402,7 +449,7 @@ public class TagContainerView extends FrameLayout {
         tagView.setText(picTag.content);
         tagView.setClickable(true);
         tagView.setShowIcon(!TextUtils.isEmpty(picTag.tagIconUrl))
-                .setIconBitmap(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
+                .setIconBitmap(TRANSPARENT_BITMAP);
         if (mode == MODE_VIEW && !TextUtils.isEmpty(picTag.tagJumpUrl)) {
             tagView.setOnClickListener(new OnClickListener() {
                 @Override

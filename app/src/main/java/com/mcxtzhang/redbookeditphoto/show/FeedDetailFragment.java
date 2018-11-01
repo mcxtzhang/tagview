@@ -85,7 +85,7 @@ public class FeedDetailFragment extends Fragment {
                     points = TAG_DATA_LIST;
                 }
 
-                mTagContainerView
+                mTagContainerView.turnOnFeedDetailMode()
                         .bindImageView(mImageView)
                         .loadTags(points);
             }
