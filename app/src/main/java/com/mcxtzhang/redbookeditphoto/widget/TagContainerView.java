@@ -12,7 +12,9 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.GestureDetectorCompat;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -39,7 +41,7 @@ public class TagContainerView extends FrameLayout {
     private Context mContext;
     public static final int MODE_EDIT = 0;
     public static final int MODE_VIEW = 1;
-    private int mode = MODE_EDIT;
+    private int mode = MODE_VIEW;
 
     private TextView mDelButton;
     private final Rect mDelButtonRect = new Rect();
@@ -70,9 +72,25 @@ public class TagContainerView extends FrameLayout {
         init(context);
     }
 
+    public TagContainerView openEditMode() {
+        return setMode(MODE_EDIT);
+    }
+
+    public TagContainerView setMode(int mode) {
+        this.mode = mode;
+        return this;
+    }
+
+    public int getMode() {
+        return mode;
+    }
+
     public TagContainerView bindImageView(ImageView targetImageView) {
         if (null == targetImageView) return this;
         mTargetImageView = targetImageView;
+        if (mode != MODE_EDIT) {
+            return this;
+        }
         post(new Runnable() {
             @Override
             public void run() {
@@ -91,6 +109,9 @@ public class TagContainerView extends FrameLayout {
                 //resize ImageView height
                 mImageViewHeight = (int) (mImageDrawableHeight * rate);
 
+                if (mode != MODE_EDIT || null == mDelButton) {
+                    return;
+                }
                 //bounds fix
                 ViewParent parent = mTargetImageView.getParent();
                 int topMargin = 0;
@@ -337,7 +358,9 @@ public class TagContainerView extends FrameLayout {
                             break;
                         case MotionEvent.ACTION_UP:
                         case MotionEvent.ACTION_CANCEL:
-                            mDelButton.setText("添加标签");
+                            if (null != mDelButton) {
+                                mDelButton.setText("添加标签");
+                            }
                             if (mDelButtonRect.contains((int) ev.getRawX(), (int) ev.getRawY())) {
                                 removeView(v);
                                 mTagViewList.remove(v);
@@ -422,6 +445,13 @@ public class TagContainerView extends FrameLayout {
         return result;
     }
 
+    /**
+     * 编辑侧、展示侧都会用到。
+     * 但编辑时，显示所有的标签。
+     * 展示时，只显示可见区域的标签
+     *
+     * @param tagPositions
+     */
     public void loadTags(final List<UploadPhotoTagData> tagPositions) {
         if (null == tagPositions) return;
         post(new Runnable() {
@@ -434,7 +464,18 @@ public class TagContainerView extends FrameLayout {
                 float[] matrixValues = new float[9];
                 mTargetImageView.getImageMatrix().getValues(matrixValues);
 
-                Rect visibleRect = new Rect(0, 0, mTargetImageView.getWidth(), mTargetImageView.getHeight());
+
+                Rect visibleRect = null;
+                if (mode == MODE_VIEW) {
+                    DisplayMetrics metrics = mContext.getApplicationContext().getResources().getDisplayMetrics();
+                    // mIconWidth + mStrokeWidth + mStrokeWidth + mIconPaddingTop + mIconPaddingTop;
+                    int tagMeasuredHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, TagView.STROKE_WIDTH_DP + TagView.ICON_PADDING_TOP_OR_BOTTOM_DP + TagView.ICON_WIDTH_DP + TagView.ICON_PADDING_TOP_OR_BOTTOM_DP + TagView.STROKE_WIDTH_DP, metrics);
+
+                    int topLimitInView = tagMeasuredHeight;
+                    int bottomLimitInView = mTargetImageView.getHeight() - tagMeasuredHeight;
+                    visibleRect = new Rect(0, topLimitInView, mTargetImageView.getWidth(), bottomLimitInView);
+                }
+
 
                 //判断Tag是否在可见范围，仅仅是宽高比严重失调的图 才会出现部分tag不可见。大部分情况下，所有Tag都是在可见范围。
                 //所以在遍历Tag时，还是将每一个Tag的在图片中的位置都计算一遍，以便后面计算margin
@@ -444,14 +485,16 @@ public class TagContainerView extends FrameLayout {
                     double originX = tagPosition.xPosition * drawableWidth;
                     double originY = tagPosition.yPosition * drawableHeight;
 
-                    int offsetX = TagMatrixUtil.getMatrixX(matrixValues, originX);
-                    int offsetY = TagMatrixUtil.getMatrixY(matrixValues, originY);
+                    int offsetXInView = TagMatrixUtil.getMatrixX(matrixValues, originX);
+                    int offsetYInView = TagMatrixUtil.getMatrixY(matrixValues, originY);
 
-                    /*boolean contains = visibleRect.contains(offsetX, offsetY);
-                    if (contains) {
-                        addTag(new Point(offsetX, offsetY), tagPosition.isRight);
-                    }*/
-                    addTag(new Point(offsetX, offsetY), tagPosition.isRight);
+                    if (mode == MODE_VIEW) {
+                        if (visibleRect.contains(offsetXInView, offsetYInView)) {
+                            addTag(new Point(offsetXInView, offsetYInView), tagPosition.isRight);
+                        }
+                    } else {
+                        addTag(new Point(offsetXInView, offsetYInView), tagPosition.isRight);
+                    }
 
                 }
             }
@@ -500,6 +543,9 @@ public class TagContainerView extends FrameLayout {
             mLastPointF.x = rawX;
             mLastPointF.y = rawY;
 
+            if (null == mDelButton) {
+                return true;
+            }
             //删除
             mDelButton.setText("拖移到此处删除");
 

@@ -29,6 +29,10 @@ import android.widget.FrameLayout;
 
 public class TagView extends View {
     private static final String TAG = TagView.class.getSimpleName();
+    public static final int ICON_WIDTH_DP = 13;
+    public static final int STROKE_WIDTH_DP = 1;
+    public static final int ICON_PADDING_TOP_OR_BOTTOM_DP = 5;
+
     private Context mContext;
 
     /**
@@ -129,7 +133,7 @@ public class TagView extends View {
         mPointPaint.setAntiAlias(true);
         mPointPaint.setColor(Color.WHITE);
 
-        mStrokeWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, metrics);
+        mStrokeWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, STROKE_WIDTH_DP, metrics);
         mRingTextGap = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, metrics);
 
         mBorderRect = new RectF();
@@ -153,10 +157,10 @@ public class TagView extends View {
         mTextBorderPaddingVerticalLine = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 9, metrics);
         //mTextBgStartX = mTextBorderStartX + mStrokeWidth;
 
-        mIconWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 13, metrics);
+        mIconWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, ICON_WIDTH_DP, metrics);
         mTextBorderPaddingArrow = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 12, metrics);
         mIconPaddingRight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, metrics);
-        mIconPaddingTop = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, metrics);
+        mIconPaddingTop = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, ICON_PADDING_TOP_OR_BOTTOM_DP, metrics);
 
 
         mTextPaint = mPointPaint;

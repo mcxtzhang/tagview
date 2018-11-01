@@ -1,8 +1,5 @@
-package com.mcxtzhang.redbookeditphoto;
+package com.mcxtzhang.redbookeditphoto.show;
 
-import android.graphics.Matrix;
-import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -12,8 +9,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
 
+import com.mcxtzhang.redbookeditphoto.R;
+import com.mcxtzhang.redbookeditphoto.UploadPhotoTagData;
 import com.mcxtzhang.redbookeditphoto.widget.TagContainerView;
 
 import java.util.HashMap;
@@ -25,28 +23,26 @@ import java.util.Map;
  * Created by zhangxutong on 2018/6/20.
  */
 
-public class PhotoEditFragment extends Fragment {
+public class FeedDetailFragment extends Fragment {
     private static final List<UploadPhotoTagData> TAG_DATA_LIST = new LinkedList<>();
 
     static {
         TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.1, 0.01));
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.4571428596973419, 0.4765799045562744));
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.2380952388048172, 0.8));
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.6761904954910278, 0.4939005672931671));
-        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.46095240116119385, 0.46555766463279724));
+        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.3, 0.3));
+        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.5, 0.5));
+        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.7, 0.7));
+        TAG_DATA_LIST.add(new UploadPhotoTagData(1, 0.9, 0.9));
     }
 
     public static Map<Integer, List<UploadPhotoTagData>> sIntegerListMap = new HashMap<>();
 
-    public static PhotoEditFragment newInstance(int position) {
-        PhotoEditFragment photoEditFragment = new PhotoEditFragment();
+    public static FeedDetailFragment newInstance(int position) {
+        FeedDetailFragment photoEditFragment = new FeedDetailFragment();
         Bundle arguments = new Bundle();
         arguments.putInt("key-position", position);
         photoEditFragment.setArguments(arguments);
         return photoEditFragment;
     }
-
-    private TextView mDelButton;
 
     TagContainerView mTagContainerView;
     ImageView mImageView;
@@ -64,7 +60,7 @@ public class PhotoEditFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_feed_detail, container, false);
 //        int[] imageWidthHeight = TagMatrixUtil.getImageWidthHeight(getResources(), R.drawable.vertical);
 //        Log.d("TAG", "vertical imageWidth:" + imageWidthHeight[0]);
 //        Log.d("TAG", "imageHeight:" + imageWidthHeight[1]);
@@ -73,27 +69,6 @@ public class PhotoEditFragment extends Fragment {
 //        Log.d("TAG", "horizontal imageWidth:" + imageWidthHeight[0]);
 //        Log.d("TAG", "imageHeight:" + imageWidthHeight[1]);
         mImageView = rootView.findViewById(R.id.imageView);
-        if ((mPosition & 1) == 0) {
-            mImageView.setImageResource(R.drawable.vertical);
-        } else {
-            mImageView.setImageResource(R.drawable.horizontal);
-        }
-        if (mPosition == 0) {
-            mImageView.setImageResource(R.drawable.vertical);
-        }
-        if (mPosition == 1) {
-            mImageView.setImageResource(R.drawable.horizontal);
-        }
-        if (mPosition == 2) {
-            mImageView.setImageResource(R.drawable.little);
-        }
-        if (mPosition == 3) {
-            mImageView.setImageResource(R.drawable.tall);
-        }
-        if (mPosition == 4) {
-            mImageView.setImageResource(R.drawable.normal);
-        }
-
         mImageView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -102,7 +77,30 @@ public class PhotoEditFragment extends Fragment {
             }
         });
 
-        mImageView.post(new Runnable() {
+        mTagContainerView = rootView.findViewById(R.id.tagContainer);
+
+        //模拟延时加载图片
+        rootView.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+
+                setImageViewSource();
+
+                //图片加载完毕
+                //开始加载标签
+                List<UploadPhotoTagData> points = sIntegerListMap.get(mPosition);
+                if (points == null /*&& mPosition == 0*/) {
+                    points = TAG_DATA_LIST;
+                }
+
+                mTagContainerView
+                        .bindImageView(mImageView)
+                        .loadTags(points);
+            }
+        }, 2000);
+
+
+        /*mImageView.post(new Runnable() {
             @Override
             public void run() {
                 Drawable drawable = mImageView.getDrawable();
@@ -141,30 +139,32 @@ public class PhotoEditFragment extends Fragment {
                 Log.d("TAG", "run() originY:" + originY);
 
             }
-        });
-
-
-        mTagContainerView = rootView.findViewById(R.id.tagContainer);
-        mTagContainerView.openEditMode()
-                .bindDelBtn(mDelButton)
-                .bindImageView(mImageView);
-
-        List<UploadPhotoTagData> points = sIntegerListMap.get(mPosition);
-        if (points == null /*&& mPosition == 0*/) {
-            points = TAG_DATA_LIST;
-        }
-        mTagContainerView.loadTags(points);
+        });*/
 
 
         return rootView;
     }
 
-    public void onSaveClick() {
-        sIntegerListMap.put(mPosition, mTagContainerView.saveTags());
-    }
-
-    public PhotoEditFragment setDelButton(TextView delButton) {
-        mDelButton = delButton;
-        return this;
+    private void setImageViewSource() {
+        if ((mPosition & 1) == 0) {
+            mImageView.setImageResource(R.drawable.vertical);
+        } else {
+            mImageView.setImageResource(R.drawable.horizontal);
+        }
+        if (mPosition == 0) {
+            mImageView.setImageResource(R.drawable.vertical);
+        }
+        if (mPosition == 1) {
+            mImageView.setImageResource(R.drawable.horizontal);
+        }
+        if (mPosition == 2) {
+            mImageView.setImageResource(R.drawable.little);
+        }
+        if (mPosition == 3) {
+            mImageView.setImageResource(R.drawable.tall);
+        }
+        if (mPosition == 4) {
+            mImageView.setImageResource(R.drawable.normal);
+        }
     }
 }

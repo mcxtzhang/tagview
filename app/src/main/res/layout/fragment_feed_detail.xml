@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.mcxtzhang.redbookeditphoto.MainActivity">
+
+    <!--！！！！！ImageView 的高度动态设定，取决于缩放后的图片高度 -->
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        tools:src="@drawable/vertical" />
+
+    <com.mcxtzhang.redbookeditphoto.widget.TagContainerView
+        android:id="@+id/tagContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp">
+
+    </com.mcxtzhang.redbookeditphoto.widget.TagContainerView>
+
+</FrameLayout>
