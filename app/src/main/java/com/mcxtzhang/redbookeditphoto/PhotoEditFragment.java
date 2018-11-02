@@ -15,8 +15,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.mcxtzhang.redbookeditphoto.base.UGCPicTag;
-import com.mcxtzhang.redbookeditphoto.widget.TagContainerView;
-import com.mcxtzhang.redbookeditphoto.widget.TagMatrixUtil;
+import com.mcxtzhang.redbookeditphoto.pictag.widget.TagContainerView;
+import com.mcxtzhang.redbookeditphoto.pictag.utils.TagMatrixUtil;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.mcxtzhang.redbookeditphoto.widget;
+package com.mcxtzhang.redbookeditphoto.pictag.widget;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
@@ -30,6 +30,7 @@ import android.widget.TextView;
 
 import com.mcxtzhang.redbookeditphoto.R;
 import com.mcxtzhang.redbookeditphoto.base.UGCPicTag;
+import com.mcxtzhang.redbookeditphoto.pictag.utils.TagMatrixUtil;
 
 import java.util.LinkedList;
 import java.util.List;

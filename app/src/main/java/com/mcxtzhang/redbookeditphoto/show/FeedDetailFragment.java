@@ -12,7 +12,7 @@ import android.widget.ImageView;
 
 import com.mcxtzhang.redbookeditphoto.R;
 import com.mcxtzhang.redbookeditphoto.base.UGCPicTag;
-import com.mcxtzhang.redbookeditphoto.widget.TagContainerView;
+import com.mcxtzhang.redbookeditphoto.pictag.widget.TagContainerView;
 
 import java.util.HashMap;
 import java.util.List;
